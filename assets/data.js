@@ -1,5 +1,19 @@
 // Edit this file to update the site content. Nothing else needs to change.
 window.SITE = {
+  // Messy rows, shaped like the problems my dbt project solves. Clean values are what comes out.
+  dirty: [
+    { raw: ["FromSoftware, Inc.",  "Feb 25th, 2022", "10,000,000 .. 20,000,000", "NULL"], clean: ["fromsoftware", "2022-02-25", "10000000", "20000000"] },
+    { raw: ["Fromsoftware inc \u00ae", "25/02/22",      "10000000..20000000",       "NULL"], clean: ["fromsoftware", "2022-02-25", "10000000", "20000000"] },
+    { raw: ["  VALVE \u00ae corporation", "2019-3-7th",  "5,000,000 .. 10,000,000",  "NULL"], clean: ["valve",         "2019-03-07", "5000000",  "10000000"] },
+    { raw: ["valve corp.",         "Mar 7, 2019",   "5000000 .. 10000000",      "NULL"], clean: ["valve",         "2019-03-07", "5000000",  "10000000"] },
+    { raw: ["CD PROJEKT RED S.A.", "dec-10-2020",   "20,000,000 ..  50,000,000", "NULL"], clean: ["cd projekt red","2020-12-10", "20000000", "50000000"] }
+  ],
+  stations: [
+    { name: "EXTRACT", title: "Get it out of the wild", text: "SEC EDGAR filings for every public company, files from Google Drive, public datasets. If it has an API or a URL, I can pull it." },
+    { name: "CLEAN",   title: "Make it behave",        text: "Macros that turn five spellings of one company into a single key. Dates pulled out of text. Columns split. Types cast. Tests so it stays clean." },
+    { name: "MODEL",   title: "Shape it for questions", text: "De-normalised tables with nested and repeated fields, so analysts query one table instead of seven joins." },
+    { name: "SERVE",   title: "Put it to work",        text: "BI-ready tables, ML models and Streamlit apps on top. Data nobody uses is just expensive storage." }
+  ],
   roles: [
     "reliable ETL pipelines",
     "dbt models analysts love",

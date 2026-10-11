@@ -3,95 +3,121 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rithik Reddy Challa · Data Engineer</title>
-<meta name="description" content="Portfolio of Rithik Reddy Challa: data engineering, ETL pipelines, dbt and machine learning.">
-<meta property="og:title" content="Rithik Reddy Challa · Data Engineer">
-<meta property="og:description" content="Building reliable ETL pipelines and ML projects. See my work.">
+<title>Rithik Challa · Data Engineer</title>
+<meta name="description" content="Rithik Reddy Challa is a data engineer who turns messy data into clean, queryable tables. ETL, dbt, ML.">
+<meta property="og:title" content="Rithik Challa · Data Engineer">
+<meta property="og:description" content="I clean up your data. Watch.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<canvas id="bg" aria-hidden="true"></canvas>
-<div class="progress" id="progress"></div>
+<div class="cursor" id="cursor"><span></span></div>
+<canvas id="fx" aria-hidden="true"></canvas>
 
-<header class="nav">
-  <a class="logo" href="#top">rc<span>.</span>dev</a>
+<header class="top">
+  <a href="#hero" class="mark">RC<i>_</i></a>
   <nav>
-    <a href="#pipeline">Pipeline</a>
-    <a href="#skills">Skills</a>
-    <a href="#projects">Projects</a>
-    <a href="#contact" class="cta-sm">Hire me</a>
+    <a href="#pipeline">pipeline</a><a href="#skills">skills</a><a href="#projects">projects</a>
+    <a href="#contact" class="pill">hire me →</a>
   </nav>
 </header>
 
-<main id="top">
-  <section class="hero">
-    <p class="eyebrow"><span class="dot"></span> Open to data engineering roles</p>
-    <h1>Hi, I'm <span class="grad">Rithik Reddy Challa</span></h1>
-    <p class="typed-line">I build <span id="typed"></span><span class="caret">|</span></p>
-    <p class="lead">Data engineer in the making with a machine learning background. I like turning messy, scattered data into clean, queryable assets that analysts and models can trust.</p>
-    <div class="buttons">
-      <a class="btn primary" href="#projects">See my work</a>
-      <a class="btn" href="mailto:19rithik@gmail.com">Email me</a>
-      <a class="btn" href="https://github.com/rithikchalla" target="_blank" rel="noopener">GitHub</a>
+<main>
+<!-- HERO -->
+<section id="hero" class="hero">
+  <div class="stickers" aria-hidden="true">
+    <b style="--x:6%;--y:16%;--r:-8deg;--d:.4" class="s lime">NULL</b>
+    <b style="--x:44%;--y:9%;--r:6deg;--d:.7" class="s tomato">JOIN</b>
+    <b style="--x:47%;--y:56%;--r:5deg;--d:1" class="s blue">dbt run</b>
+    <b style="--x:40%;--y:78%;--r:-6deg;--d:.2" class="s ink">ETL</b>
+  </div>
+  <div class="hero-l">
+    <p class="kicker"><span class="blink"></span> available for data engineering roles</p>
+    <h1 id="name" aria-label="Rithik Challa"><span class="nm" data-t="RITHIK"></span><span class="nm outline" data-t="CHALLA"></span></h1>
+    <p class="tag">Data engineer. I take the data nobody trusts and make it <mark>boring</mark> <small>(that's the compliment)</small>.</p>
+    <div class="ctas">
+      <a class="btn lime" href="#projects">see the work</a>
+      <a class="btn" href="mailto:19rithik@gmail.com">19rithik@gmail.com</a>
     </div>
-    <div class="stats">
-      <div><b data-count="9">0</b><span>public repos</span></div>
-      <div><b data-count="4">0</b><span>languages</span></div>
-      <div><b data-count="3">0</b><span>ETL / dbt projects</span></div>
-      <div><b data-count="1000000" data-suffix="+">0</b><span>samples in the Fakeddit dataset</span></div>
-    </div>
-  </section>
+  </div>
 
-  <section id="pipeline" class="reveal">
-    <h2><span class="num">01</span> How I think about data</h2>
-    <p class="sub">Every project I touch follows the same shape. Hover a stage.</p>
-    <div class="pipe">
-      <div class="stage" tabindex="0">
-        <div class="icon">⬇</div><h3>Extract</h3>
-        <p>APIs, files, scrapers. Pulling filings from SEC EDGAR, Google Drive, and public datasets.</p>
-      </div>
-      <div class="flow"><i></i><i></i><i></i></div>
-      <div class="stage" tabindex="0">
-        <div class="icon">⚙</div><h3>Transform</h3>
-        <p>Python and dbt models: cleaning, type casting, de-duplication, denormalised marts.</p>
-      </div>
-      <div class="flow"><i></i><i></i><i></i></div>
-      <div class="stage" tabindex="0">
-        <div class="icon">⬆</div><h3>Load &amp; Serve</h3>
-        <p>Queryable tables for BI, plus models and apps (Streamlit) that put the data to use.</p>
+  <div class="hero-r">
+    <div class="win" id="dirty">
+      <div class="win-bar"><i></i><i></i><i></i><span>raw.developers  →  stg_developers</span></div>
+      <table>
+        <thead><tr><th>developer</th><th>released</th><th>owners_low</th><th>owners_high</th></tr></thead>
+        <tbody id="dirty-body"></tbody>
+      </table>
+      <div class="win-foot">
+        <button class="btn tomato" id="run" type="button">▶ dbt run</button>
+        <span id="status" aria-live="polite">5 rows · 3 duplicates · 4 formats</span>
       </div>
     </div>
-  </section>
+    <p class="hint">↑ real problems from my dbt project. Hit the button.</p>
+  </div>
+</section>
 
-  <section id="skills" class="reveal">
-    <h2><span class="num">02</span> Toolbox</h2>
-    <p class="sub">Click a category to filter.</p>
-    <div class="filters" id="filters"></div>
-    <div class="chips" id="chips"></div>
-    <div class="bars" id="bars"></div>
-  </section>
+<!-- MARQUEE -->
+<div class="band tomato" aria-hidden="true"><div class="mq" data-mq></div></div>
+<div class="band lime rev" aria-hidden="true"><div class="mq" data-mq="2"></div></div>
 
-  <section id="projects" class="reveal">
-    <h2><span class="num">03</span> Selected projects</h2>
-    <p class="sub">Pulled from my repositories. Cards tilt toward your cursor.</p>
-    <div class="grid" id="grid"></div>
-  </section>
-
-  <section id="terminal" class="reveal">
-    <h2><span class="num">04</span> About, in a terminal</h2>
-    <div class="term">
-      <div class="bar"><i></i><i></i><i></i><span>rithik@pipeline: ~</span></div>
-      <pre id="term"></pre>
+<!-- PIPELINE -->
+<section id="pipeline" class="pipeline">
+  <div class="sticky">
+    <h2><span>01</span> Follow the data</h2>
+    <p class="sub">Scroll. The box is a row of data on its way through my pipeline.</p>
+    <div class="road">
+      <div class="line"><div class="line-fill" id="line-fill"></div></div>
+      <div class="st" style="--p:8%"><b>1</b><span>EXTRACT</span></div>
+      <div class="st" style="--p:36%"><b>2</b><span>CLEAN</span></div>
+      <div class="st" style="--p:64%"><b>3</b><span>MODEL</span></div>
+      <div class="st" style="--p:92%"><b>4</b><span>SERVE</span></div>
+      <div class="box" id="box"><div class="eyes"><i></i><i></i></div><div class="mouth"></div></div>
     </div>
-  </section>
+    <div class="panel" id="panel">
+      <div class="panel-n" id="panel-n">1</div>
+      <div><h3 id="panel-t"></h3><p id="panel-p"></p></div>
+    </div>
+  </div>
+</section>
 
-  <section id="contact" class="reveal contact">
-    <h2>Let's build something with your data.</h2>
-    <p class="sub">I'm looking for data engineering, analytics engineering and ML roles, and happy to collaborate on cloud and ML projects.</p>
-    <a class="btn primary big" href="mailto:19rithik@gmail.com">19rithik@gmail.com</a>
-    <p class="foot">© <span id="year"></span> Rithik Reddy Challa · Hand-built with HTML, CSS and a little canvas.</p>
-  </section>
+<!-- SKILLS -->
+<section id="skills" class="skills">
+  <h2><span>02</span> Query my skills</h2>
+  <p class="sub">It's a real table. Click a column header to sort, click a filter to change the WHERE clause.</p>
+  <div class="filters" id="filters"></div>
+  <pre class="sql" id="sql"></pre>
+  <div class="table">
+    <div class="th">
+      <button data-k="name">skill <em></em></button>
+      <button data-k="cat" class="hide-s">category <em></em></button>
+      <button data-k="level">confidence <em></em></button>
+    </div>
+    <div class="rows" id="rows"></div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects" class="projects">
+  <h2><span>03</span> SELECT * FROM projects</h2>
+  <p class="sub">Each repo is a table. Rows are what it does.</p>
+  <div class="grid" id="grid"></div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact">
+  <p class="kicker big">// last row</p>
+  <h2 class="giant">LET'S MOVE<br>SOME <span class="outline">DATA</span></h2>
+  <div class="ctas c">
+    <button class="btn lime" id="fire" type="button">fire confetti</button>
+    <a class="btn" href="mailto:19rithik@gmail.com">19rithik@gmail.com</a>
+    <a class="btn" href="https://github.com/rithikchalla" target="_blank" rel="noopener">github.com/rithikchalla</a>
+  </div>
+  <p class="foot">© <span id="year"></span> Rithik Reddy Challa · rows: 1 · status: <b>hireable</b></p>
+</section>
 </main>
 <script src="assets/data.js"></script>
 <script src="assets/main.js"></script>
