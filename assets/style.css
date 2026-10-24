@@ -388,3 +388,4 @@ h1 .ch{display:inline-block;transition:transform .35s cubic-bezier(.2,1.6,.4,1);
   .metrics li span{font-size:11.5px}
   .label3d.strata{display:none!important}
 }
+.metrics li b.long{font-size:1.05rem;padding:8px 2px}

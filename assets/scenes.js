@@ -334,7 +334,7 @@ const clock = new THREE.Clock();
   camera.position.set(0, 1.6, 12.6); camera.lookAt(0, 0, 0);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x999999, 1.8));
   const dl = new THREE.DirectionalLight(0xffffff, 1.2); dl.position.set(3, 5, 6); scene.add(dl);
-  const CAT = { 'AI & LLM': C.tomato, 'Data Engineering': C.lime, 'Cloud & DevOps': 0x7fd3ff, 'Languages': C.pink, 'Analytics & ML': 0xc9b8ff };
+  const CAT = { 'AI & LLM': C.tomato, 'Data Engineering': C.lime, 'Cloud & DevOps': 0x7fd3ff, 'Languages & Frameworks': C.pink, 'BI': 0xc9b8ff };
   const g = new THREE.Group(); scene.add(g);
 
   // companies: a ring of boxes in the middle

@@ -93,7 +93,7 @@
   }), .4);
 
   $$('[data-mq]').forEach((el) => {
-    const html = ['Palantir Foundry', 'Palantir AIP', 'Google ADK', 'Multi-agent systems', 'RAG', 'Text-to-SQL', 'BigQuery', 'Apache Spark', 'Apache Iceberg', 'Snowflake', 'Airflow', 'GCP', 'Kafka']
+    const html = ['Palantir Foundry', 'Palantir AIP', 'Google ADK', 'Multi-agent systems', 'RAG', 'Text-to-SQL', 'BigQuery', 'LLM evals', 'Guardrails', 'Apache Spark', 'Apache Iceberg', 'Dataproc', 'Snowflake', 'Airflow', 'GCP']
       .map((w) => `<span>${esc(w)}</span>`).join('');
     el.innerHTML = html + html;
   });
@@ -108,7 +108,7 @@
     if (i === dstep) return; dstep = i; window.diveStep = i;
     const d = S.dive[i];
     dk.textContent = d.kicker; dt.textContent = d.title; dp.textContent = d.text;
-    di.innerHTML = d.items.map((m, k) => `<li style="--i:${k}"><b>${esc(m.k)}</b><span>${esc(m.v)}</span></li>`).join('');
+    di.innerHTML = d.items.map((m, k) => `<li style="--i:${k}"><b class="${m.k.length > 6 ? 'long' : ''}">${esc(m.k)}</b><span>${esc(m.v)}</span></li>`).join('');
     $('#dive-chips').innerHTML = (d.chips || []).map((c, k) => `<span style="--i:${k}">${esc(c)}</span>`).join('');
     const big = $('#dive-big'), bb = $('b', big);
     big.classList.toggle('none', !d.big);
@@ -292,7 +292,7 @@
   onView($('#cert'), () => { if (!reduce) setTimeout(() => { coin.classList.add('flip'); setTimeout(() => coin.classList.remove('flip'), 2200); }, 500); }, .5);
 
   /* ---------- skills with receipts (3D constellation lives in scenes.js) ---------- */
-  const CATC = { 'AI & LLM': 'var(--tomato)', 'Data Engineering': 'var(--lime)', 'Cloud & DevOps': '#7fd3ff', 'Languages': 'var(--pink)', 'Analytics & ML': '#c9b8ff' };
+  const CATC = { 'AI & LLM': 'var(--tomato)', 'Data Engineering': 'var(--lime)', 'Cloud & DevOps': '#7fd3ff', 'Languages & Frameworks': 'var(--pink)', 'BI': '#c9b8ff' };
   const rcpt = $('#rcpt'), catsEl = $('#skill-cats');
   catsEl.innerHTML = S.categories.map((c) => `<div><h5><i style="background:${CATC[c]}"></i>${esc(c)}</h5><div class="chips">${
     S.skills.map((sk, i) => sk.cat === c ? `<button type="button" data-i="${i}" class="${sk.r.length ? '' : 'tk'}">${esc(sk.name)}</button>` : '').join('')}</div></div>`).join('');
