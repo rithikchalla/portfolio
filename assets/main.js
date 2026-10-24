@@ -6,8 +6,10 @@
   const fine = matchMedia('(pointer: fine)').matches;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const wait = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+  const onView = (el, fn, threshold = .25) => new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { o.disconnect(); fn(); } }), { threshold }).observe(el);
 
-  /* ---------- cursor: a lime square that leans into its movement ---------- */
+  /* ---------- cursor ---------- */
   const cur = $('#cursor');
   if (fine) {
     let x = 0, y = 0, tx = 0, ty = 0;
@@ -19,10 +21,10 @@
       requestAnimationFrame(loop);
     })();
     document.addEventListener('mouseover', (e) => {
-      const card = e.target.closest('.card');
+      const card = e.target.closest('.card'), drag = e.target.closest('.onode,.stage3d');
       const hot = e.target.closest('a,button,.row');
-      cur.classList.toggle('big', !!card);
-      cur.firstElementChild.textContent = card ? 'OPEN' : '';
+      cur.classList.toggle('big', !!(card || drag));
+      cur.firstElementChild.textContent = card ? 'OPEN' : drag ? 'DRAG' : '';
       cur.firstElementChild.style.background = hot && !card ? 'var(--tomato)' : '';
     });
   }
@@ -38,92 +40,210 @@
         { duration: 700, delay: 150 + i * 70 + ri * 300, easing: 'cubic-bezier(.3,1.3,.4,1)', fill: 'backwards' });
     });
   });
-  const hero = $('#hero');
+  const hl = $('.hero-l');
   if (!reduce && fine) {
     let mx = -999, my = -999, raf = 0;
     const apply = () => {
       raf = 0;
       for (const l of letters) {
-        const r = l.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-        const dx = cx - mx, dy = cy - my, d = Math.hypot(dx, dy) || 1, R = 190;
-        if (d < R) { const f = (R - d) / R; l.style.transform = `translate(${dx / d * f * 70}px,${dy / d * f * 50}px) rotate(${dx / d * f * 28}deg) scale(${1 + f * .12})`; }
-        else l.style.transform = '';
+        const r = l.getBoundingClientRect(), dx = r.left + r.width / 2 - mx, dy = r.top + r.height / 2 - my, d = Math.hypot(dx, dy) || 1, R = 170;
+        l.style.transform = d < R ? `translate(${dx / d * (R - d) / R * 60}px,${dy / d * (R - d) / R * 44}px) rotate(${dx / d * (R - d) / R * 26}deg)` : '';
       }
     };
-    hero.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; if (!raf) raf = requestAnimationFrame(apply); });
-    hero.addEventListener('mouseleave', () => { mx = my = -999; apply(); });
+    hl.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; if (!raf) raf = requestAnimationFrame(apply); });
+    hl.addEventListener('mouseleave', () => { mx = my = -999; apply(); });
   }
-  const stk = $$('.stickers .s');
-  if (!reduce && fine) addEventListener('mousemove', (e) => {
-    const nx = e.clientX / innerWidth - .5, ny = e.clientY / innerHeight - .5;
-    stk.forEach((s, i) => { s.style.translate = `${nx * (30 + i * 14)}px ${ny * (24 + i * 10)}px`; });
-  });
 
-  /* ---------- the dirty table: dbt run ---------- */
-  const body = $('#dirty-body'), runBtn = $('#run'), status = $('#status');
-  const GL = '01{}[]<>#$%&*?/\\=+';
-  let cleaned = false, busy = false;
-  body.innerHTML = S.dirty.map((r) => `<tr>${r.raw.map((v) => `<td class="raw">${esc(v)}</td>`).join('')}</tr>`).join('');
-  const cells = $$('td', body);
-  const nCols = S.dirty[0].raw.length;
-  const val = (i, key) => S.dirty[Math.floor(i / nCols)][key][i % nCols];
-  function run() {
-    if (busy) return;
-    if (cleaned) {
-      cells.forEach((c, i) => { c.textContent = val(i, 'raw'); c.className = 'raw'; });
-      cleaned = false; runBtn.textContent = '▶ dbt run'; status.className = '';
-      status.textContent = '5 rows · 3 duplicates · 4 formats'; return;
-    }
-    busy = true; runBtn.textContent = '… running'; status.textContent = 'compiling 4 models…';
-    const t0 = performance.now(), dur = (i) => reduce ? 0 : 500 + i * 55;
-    (function tick(now) {
-      let left = 0;
-      cells.forEach((c, i) => {
-        const el = now - t0, d = dur(i), target = val(i, 'clean');
-        if (el >= d) { if (c.className !== 'ok') { c.textContent = target; c.className = 'ok'; } return; }
-        left++; c.className = 'scr';
-        c.textContent = [...target].map((ch, k) => (el / d > k / target.length ? ch : GL[(Math.random() * GL.length) | 0])).join('');
-      });
-      if (left) return requestAnimationFrame(tick);
-      busy = false; cleaned = true; runBtn.textContent = '↺ make it dirty again';
-      status.className = 'done'; status.textContent = '✔ 5 rows · 3 keys · 1 format · tests pass';
-      burst(innerWidth * .72, innerHeight * .6);
-    })(t0);
+  /* ---------- typed roles ---------- */
+  const typed = $('#typed');
+  if (reduce) typed.textContent = S.roles[0];
+  else {
+    let r = 0, c = 0, del = false;
+    (function tick() {
+      const w = S.roles[r]; typed.textContent = w.slice(0, c);
+      if (!del && c === w.length) { del = true; return setTimeout(tick, 1600); }
+      if (del && c === 0) { del = false; r = (r + 1) % S.roles.length; }
+      c += del ? -1 : 1; setTimeout(tick, del ? 25 : 55);
+    })();
   }
-  runBtn.addEventListener('click', run);
-  setTimeout(() => !cleaned && !busy && run(), 1800);
 
-  /* ---------- marquee bands ---------- */
+  /* ---------- marquee ---------- */
   $$('[data-mq]').forEach((el) => {
-    const words = el.dataset.mq ? ['extract', 'transform', 'load', 'test', 'document', 'repeat', 'open to work', 'hire me'] : S.skills.map((s) => s.name);
-    const html = words.map((w) => `<span>${esc(w)}</span>`).join('');
+    const html = ['Apache Spark', 'Apache Iceberg', 'Lakehouse', 'BigQuery', 'Palantir Foundry', 'Ontology', 'AI Agents', 'RAG', 'dbt', 'Python', 'SQL']
+      .map((w) => `<span>${esc(w)}</span>`).join('');
     el.innerHTML = html + html;
   });
 
-  /* ---------- pipeline: scroll drives the box ---------- */
+  /* ---------- pipeline conveyor ---------- */
+  const n = S.stations.length, pos = (i) => 6 + i * (88 / (n - 1));
+  $('#stations').innerHTML = S.stations.map((s, i) => `<div class="st" style="--p:${pos(i)}%"><b>${i + 1}</b><span>${esc(s.name)}</span></div>`).join('');
   const pipe = $('#pipeline'), box = $('#box'), fill = $('#line-fill'), sts = $$('.st');
   const pn = $('#panel-n'), pt = $('#panel-t'), pp = $('#panel-p'), panel = $('#panel');
   let stage = -1;
-  function setStage(i) {
-    if (i === stage) return; stage = i;
-    box.className = 'box s' + i;
-    sts.forEach((s, k) => s.classList.toggle('on', k === i));
-    const st = S.stations[i];
-    pn.textContent = i + 1; pt.textContent = st.title; pp.textContent = st.text;
-    panel.classList.remove('swap'); void panel.offsetWidth; panel.classList.add('swap');
-  }
-  function onScroll() {
-    const r = pipe.getBoundingClientRect(), total = r.height - innerHeight;
-    const p = clamp(-r.top / total, 0, 1), x = 4 + p * 92;
+  const swap = (el) => { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); };
+  function onPipe() {
+    const r = pipe.getBoundingClientRect(), p = clamp(-r.top / (r.height - innerHeight), 0, 1), x = 4 + p * 92;
     box.style.left = x + '%'; fill.style.width = x + '%';
-    box.style.translate = `0 ${Math.sin(p * 40) * -6}px`;
-    setStage(x < 22 ? 0 : x < 50 ? 1 : x < 78 ? 2 : 3);
+    box.style.translate = `0 ${Math.sin(p * 50) * -6}px`;
+    let i = 0, best = 1e9; for (let k = 0; k < n; k++) { const d = Math.abs(pos(k) - x); if (d < best) { best = d; i = k; } }
+    if (i === stage) return; stage = i;
+    box.className = 'box s' + i; sts.forEach((s, k) => s.classList.toggle('on', k === i));
+    pn.textContent = i + 1; pt.textContent = S.stations[i].title; pp.textContent = S.stations[i].text; swap(panel);
   }
-  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); onScroll();
+  addEventListener('scroll', onPipe, { passive: true }); addEventListener('resize', onPipe); onPipe();
 
-  /* ---------- skills as a sortable SQL table ---------- */
-  const CAT_COL = { 'Data Engineering': 'var(--lime)', 'ML / AI': 'var(--tomato)', 'Languages': 'var(--blue)', 'Tooling': 'var(--pink)' };
-  const H = 46, rowsEl = $('#rows'), sqlEl = $('#sql'), filtersEl = $('#filters');
+  /* ---------- iceberg dive panel (3D lives in scenes.js; it reads window.diveProgress) ---------- */
+  const dive = $('#dive'), dn = $('#dive-n'), dt = $('#dive-t'), dp = $('#dive-p'), dpanel = $('#dive-panel'), dfill = $('#depth-fill'), dnum = $('#depth-n');
+  let dstep = -1;
+  function onDive() {
+    const r = dive.getBoundingClientRect(), p = clamp(-r.top / (r.height - innerHeight), 0, 1);
+    window.diveProgress = p;
+    dfill.style.height = p * 100 + '%'; dnum.parentElement.style.setProperty('--d', p * 100 + '%');
+    dnum.textContent = Math.round(p * 90) + ' m';
+    dive.classList.toggle('under', p > .16);
+    const i = Math.min(S.dive.length - 1, Math.floor(p * S.dive.length * .999));
+    if (i === dstep) return; dstep = i;
+    dn.textContent = i; dt.textContent = S.dive[i].title; dp.textContent = S.dive[i].text; swap(dpanel);
+    window.diveStep = i;
+  }
+  addEventListener('scroll', onDive, { passive: true }); addEventListener('resize', onDive); onDive();
+
+  /* ---------- AI agent trace (drives the 3D scene through events) ---------- */
+  const trace = $('#trace');
+  const emit = (name, detail) => dispatchEvent(new CustomEvent(name, { detail }));
+  let runId = 0, visible = false;
+  async function runAgent() {
+    const id = ++runId; trace.innerHTML = '';
+    const alive = () => id === runId;
+    for (const step of S.trace) {
+      if (!alive()) return;
+      const el = document.createElement('div'); el.className = 'tr ' + step.t;
+      const who = { user: 'USER', plan: 'PLAN', tool: 'TOOL', answer: 'AGENT' }[step.t];
+      if (step.t === 'tool') {
+        el.innerHTML = `<span class="who">${who}</span><code>${esc(step.tool)}</code>(${esc(step.s)})<span class="res">⟳ running<span class="spinner"></span></span>`;
+        trace.appendChild(el); requestAnimationFrame(() => el.classList.add('in'));
+        emit('agent:tool', { tool: step.tool, phase: 'call' });
+        await wait(1300); if (!alive()) return;
+        el.querySelector('.res').innerHTML = `⮑ <b>${esc(step.r)}</b>`;
+        emit('agent:tool', { tool: step.tool, phase: 'done' });
+        await wait(500);
+      } else {
+        el.innerHTML = `<span class="who">${who}</span><span class="txt"></span>`;
+        trace.appendChild(el); requestAnimationFrame(() => el.classList.add('in'));
+        if (step.t === 'answer') emit('agent:answer', {});
+        if (step.t === 'plan') emit('agent:think', {});
+        const t = el.querySelector('.txt');
+        if (reduce) t.textContent = step.s;
+        else for (let k = 1; k <= step.s.length; k++) { if (!alive()) return; t.textContent = step.s.slice(0, k); await wait(step.t === 'user' ? 22 : 12); }
+        await wait(700);
+      }
+      trace.scrollTop = trace.scrollHeight;
+    }
+    emit('agent:idle', {});
+    await wait(6000);
+    if (alive() && visible) runAgent();
+  }
+  $('#replay').addEventListener('click', runAgent);
+  new IntersectionObserver((es) => es.forEach((e) => {
+    const was = visible; visible = e.isIntersecting;
+    if (visible && !was && !trace.childElementCount) runAgent();
+  }), { threshold: .3 }).observe($('#agents'));
+
+  /* ---------- ontology explorer: tiny force layout + drag ---------- */
+  const board = $('#onto-board'), svg = $('#onto-svg'), card = $('#onto-card');
+  const O = S.ontology, nodes = O.objects.map((o, i) => ({ ...o, x: 0, y: 0, vx: 0, vy: 0, a: i / O.objects.length * Math.PI * 2 }));
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  const linksEl = O.links.map(([a, b, label]) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.innerHTML = `<line></line><text text-anchor="middle">${esc(label)}</text>`;
+    svg.appendChild(g); return { a: byId[a], b: byId[b], g, line: g.firstChild, text: g.lastChild };
+  });
+  nodes.forEach((nd) => {
+    const el = document.createElement('div'); el.className = 'onode c-' + nd.color; el.tabIndex = 0;
+    el.innerHTML = `${esc(nd.id)}<small>object type</small>`;
+    board.appendChild(el); nd.el = el;
+  });
+  let W = 0, H = 0, drag = null, sel = null;
+  function sizeBoard() {
+    const fresh = !W; W = board.clientWidth; H = board.clientHeight;
+    if (fresh) nodes.forEach((nd) => { nd.x = W / 2 + Math.cos(nd.a) * W * .3; nd.y = H / 2 + Math.sin(nd.a) * H * .32; });
+  }
+  sizeBoard(); addEventListener('resize', sizeBoard);
+  function select(nd) {
+    sel = nd; nodes.forEach((x) => x.el.classList.toggle('sel', x === nd));
+    const rel = O.links.filter(([a, b]) => a === nd.id || b === nd.id);
+    linksEl.forEach((l) => l.line.classList.toggle('hot', l.a === nd || l.b === nd));
+    card.innerHTML = `<div class="win-bar"><i></i><i></i><i></i><span>ontology / object types / ${esc(nd.id)}</span></div>
+      <div class="onto-body"><h3>${esc(nd.id)}</h3><small>backed by a Spark-built dataset · ${nd.props.length} properties</small>
+      <h5>properties</h5><ul>${nd.props.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
+      <h5>links</h5><ul>${rel.map(([a, b, l]) => `<li>${esc(a)} → <b>${esc(l)}</b> → ${esc(b)}</li>`).join('')}</ul>
+      <h5>actions</h5><div class="acts">${nd.actions.map((a) => `<button type="button">${esc(a)}()</button>`).join('')}</div>
+      <div class="onto-toast" id="onto-toast"></div></div>`;
+    $$('.acts button', card).forEach((b) => b.onclick = () => {
+      const t = $('#onto-toast'); t.textContent = `✔ ${b.textContent} submitted on ${nd.id}: validated, logged, written back (demo)`;
+      t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+    });
+  }
+  select(byId.Order);
+  let moved = false;
+  board.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest('.onode'); if (!el) return;
+    drag = nodes.find((n) => n.el === el); moved = false; el.setPointerCapture(e.pointerId);
+  });
+  board.addEventListener('pointermove', (e) => {
+    if (!drag) return; const r = board.getBoundingClientRect();
+    drag.x = clamp(e.clientX - r.left, 40, W - 40); drag.y = clamp(e.clientY - r.top, 30, H - 30); drag.vx = drag.vy = 0; moved = true;
+  });
+  const end = () => { if (drag && !moved) select(drag); drag = null; };
+  board.addEventListener('pointerup', end); board.addEventListener('pointercancel', () => (drag = null));
+  board.addEventListener('keydown', (e) => { const nd = nodes.find((n) => n.el === e.target); if (nd && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(nd); } });
+  let tt = 0;
+  (function sim() {
+    tt += .016;
+    const L = Math.min(W, 700) * .36;
+    for (const a of nodes) for (const b of nodes) if (a !== b) {
+      const dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + .01, f = 42000 / d2;
+      a.vx += dx * f / Math.sqrt(d2) * .05; a.vy += dy * f / Math.sqrt(d2) * .05;
+    }
+    for (const l of linksEl) {
+      const dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, d = Math.hypot(dx, dy) || 1, f = (d - L) * .004;
+      l.a.vx += dx / d * f * 4; l.a.vy += dy / d * f * 4; l.b.vx -= dx / d * f * 4; l.b.vy -= dy / d * f * 4;
+    }
+    nodes.forEach((nd, i) => {
+      nd.vx += (W / 2 - nd.x) * .002; nd.vy += (H / 2 - nd.y) * .003;
+      if (!reduce) { nd.vx += Math.cos(tt + i) * .03; nd.vy += Math.sin(tt * 1.3 + i) * .03; }
+      if (nd === drag) return;
+      nd.vx *= .82; nd.vy *= .82; nd.x = clamp(nd.x + nd.vx, 60, W - 60); nd.y = clamp(nd.y + nd.vy, 34, H - 34);
+    });
+    nodes.forEach((nd) => { nd.el.style.left = nd.x + 'px'; nd.el.style.top = nd.y + 'px'; });
+    linksEl.forEach((l) => {
+      l.line.setAttribute('x1', l.a.x); l.line.setAttribute('y1', l.a.y); l.line.setAttribute('x2', l.b.x); l.line.setAttribute('y2', l.b.y);
+      l.text.setAttribute('x', (l.a.x + l.b.x) / 2); l.text.setAttribute('y', (l.a.y + l.b.y) / 2 - 6);
+    });
+    requestAnimationFrame(sim);
+  })();
+
+  /* ---------- certification coin ---------- */
+  const coin = $('#coin'), wrap = $('#coin-wrap');
+  $('#cert-domains').innerHTML = S.cert.domains.map((d) => `<li>${esc(d)}</li>`).join('');
+  const ring = $('.ring'), txt = 'GOOGLE CLOUD CERTIFIED ✱ PROFESSIONAL DATA ENGINEER ✱ ';
+  ring.innerHTML = [...txt].map((c, i) => `<i style="transform:translateX(-50%) rotate(${i * 360 / txt.length}deg)">${c === ' ' ? '&nbsp;' : esc(c)}</i>`).join('');
+  coin.addEventListener('click', () => coin.classList.toggle('flip'));
+  coin.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); coin.classList.toggle('flip'); } });
+  if (fine && !reduce) {
+    wrap.addEventListener('mousemove', (e) => {
+      const r = wrap.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      wrap.style.transform = `rotateX(${-y * 24}deg) rotateY(${x * 24}deg)`;
+    });
+    wrap.addEventListener('mouseleave', () => (wrap.style.transform = ''));
+    wrap.style.transition = 'transform .2s'; wrap.style.transformStyle = 'preserve-3d';
+  }
+  if (S.cert.url) $('#cert-ctas').innerHTML = `<a class="btn lime" href="${esc(S.cert.url)}" target="_blank" rel="noopener">verify credential ↗</a>`;
+  onView($('#cert'), () => { if (!reduce) setTimeout(() => { coin.classList.add('flip'); setTimeout(() => coin.classList.remove('flip'), 2200); }, 500); }, .5);
+
+  /* ---------- skills table ---------- */
+  const CAT_COL = { 'AI / Agents': 'var(--tomato)', 'Lakehouse & Spark': '#7fd3ff', 'Foundry': 'var(--lime)', 'Cloud & Warehouse': 'var(--blue)', 'ML': 'var(--pink)', 'Languages & Tools': '#e9e2cf' };
+  const RH = 46, rowsEl = $('#rows'), sqlEl = $('#sql'), filtersEl = $('#filters');
   let cat = 'All', key = 'level', dir = -1;
   const rowEls = S.skills.map((s) => {
     const r = document.createElement('div'); r.className = 'row';
@@ -133,18 +253,18 @@
   function layout() {
     const vis = S.skills.map((s, i) => [s, i]).filter(([s]) => cat === 'All' || s.cat === cat)
       .sort((a, b) => (typeof a[0][key] === 'number' ? a[0][key] - b[0][key] : a[0][key].localeCompare(b[0][key])) * dir);
-    const hid = S.skills.map((s, i) => i).filter((i) => !vis.some(([, v]) => v === i));
-    vis.forEach(([, i], n) => { rowEls[i].style.top = n * H + 'px'; rowEls[i].classList.remove('out'); });
-    hid.forEach((i, n) => { rowEls[i].style.top = (vis.length + n) * H + 'px'; rowEls[i].classList.add('out'); });
-    rowsEl.style.height = vis.length * H + 'px';
+    const shown = new Set(vis.map(([, i]) => i));
+    vis.forEach(([, i], k) => { rowEls[i].style.top = k * RH + 'px'; rowEls[i].classList.remove('out'); });
+    S.skills.forEach((_, i) => { if (!shown.has(i)) { rowEls[i].style.top = vis.length * RH + 'px'; rowEls[i].classList.add('out'); } });
+    rowsEl.style.height = vis.length * RH + 'px';
     const col = { name: 'skill', cat: 'category', level: 'confidence' }[key];
-    sqlEl.innerHTML = `<span class="k">SELECT</span> skill, category, confidence\n<span class="k">FROM</span>   <span class="f">toolbox</span>` +
+    sqlEl.innerHTML = `<span class="k">SELECT</span> skill, category, confidence\n<span class="k">FROM</span>   <span class="f">rithik.toolbox</span>` +
       (cat !== 'All' ? `\n<span class="k">WHERE</span>  category = <span class="v">'${esc(cat)}'</span>` : '') +
       `\n<span class="k">ORDER BY</span> ${col} <span class="k">${dir < 0 ? 'DESC' : 'ASC'}</span>;  <span style="opacity:.5">-- ${vis.length} rows</span>`;
     $$('.th button').forEach((b) => { b.lastElementChild.textContent = b.dataset.k === key ? (dir < 0 ? '▼' : '▲') : ''; });
   }
   S.categories.forEach((c) => {
-    const b = document.createElement('button'); b.textContent = c === 'All' ? '*' : c; if (c === cat) b.className = 'on';
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = c === 'All' ? '*' : c; if (c === cat) b.className = 'on';
     b.onclick = () => { cat = c; $$('button', filtersEl).forEach((x) => x.classList.toggle('on', x === b)); layout(); };
     filtersEl.appendChild(b);
   });
@@ -152,13 +272,41 @@
     if (key === b.dataset.k) dir *= -1; else { key = b.dataset.k; dir = key === 'level' ? -1 : 1; } layout();
   }));
   layout();
-  new IntersectionObserver((es, o) => es.forEach((e) => {
-    if (!e.isIntersecting) return; o.disconnect();
-    $$('.bar i', rowsEl).forEach((i, n) => setTimeout(() => (i.style.width = i.dataset.w + '%'), n * 60));
-  }), { threshold: .2 }).observe(rowsEl);
+  onView(rowsEl, () => $$('.bar i', rowsEl).forEach((i, k) => setTimeout(() => (i.style.width = i.dataset.w + '%'), k * 50)), .15);
 
-  /* ---------- projects as database tables ---------- */
-  const HC = { 'Data Engineering': 'var(--lime)', 'ML / AI': 'var(--pink)', 'Tooling': '#a9c4ff' };
+  /* ---------- dbt demo ---------- */
+  const body = $('#dirty-body'), runBtn = $('#run'), status = $('#status'), GL = '01{}[]<>#$%&*?/\\=+';
+  let cleaned = false, busy = false;
+  body.innerHTML = S.dirty.map((r) => `<tr>${r.raw.map((v) => `<td class="raw">${esc(v)}</td>`).join('')}</tr>`).join('');
+  const cells = $$('td', body), nCols = S.dirty[0].raw.length;
+  const val = (i, k) => S.dirty[Math.floor(i / nCols)][k][i % nCols];
+  function run() {
+    if (busy) return;
+    if (cleaned) {
+      cells.forEach((c, i) => { c.textContent = val(i, 'raw'); c.className = 'raw'; });
+      cleaned = false; runBtn.textContent = '▶ dbt run'; status.className = ''; status.textContent = '5 rows · 3 duplicates · 4 formats'; return;
+    }
+    busy = true; runBtn.textContent = '… running'; status.textContent = 'compiling models…';
+    const t0 = performance.now();
+    (function tick(now) {
+      let left = 0;
+      cells.forEach((c, i) => {
+        const el = now - t0, d = reduce ? 0 : 500 + i * 55, target = val(i, 'clean');
+        if (el >= d) { if (c.className !== 'ok') { c.textContent = target; c.className = 'ok'; } return; }
+        left++; c.className = 'scr';
+        c.textContent = [...target].map((ch, k) => (el / d > k / target.length ? ch : GL[(Math.random() * GL.length) | 0])).join('');
+      });
+      if (left) return requestAnimationFrame(tick);
+      busy = false; cleaned = true; runBtn.textContent = '↺ make it dirty again';
+      status.className = 'done'; status.textContent = '✔ 5 rows · 3 keys · 1 format · tests pass';
+      const r = runBtn.getBoundingClientRect(); burst(r.left + r.width / 2, r.top);
+    })(t0);
+  }
+  runBtn.addEventListener('click', run);
+  onView($('#dirty'), () => setTimeout(() => !cleaned && run(), 600), .5);
+
+  /* ---------- projects ---------- */
+  const HC = { 'Data Engineering': 'var(--lime)', 'ML / AI': 'var(--pink)', 'AI / Agents': 'var(--tomato)', 'Tooling': '#a9c4ff' };
   $('#grid').innerHTML = S.projects.map((p, i) => `
     <a class="card" href="${esc(p.url)}" target="_blank" rel="noopener" style="--r:${[-1.4, 1, -.6, 1.6, -1.1, .7][i % 6]}deg;--hc:${HC[p.tag] || 'var(--lime)'}">
       <header><span>TABLE</span><em>${esc(p.tag)}</em></header>
@@ -172,7 +320,7 @@
   let parts = [], running = false;
   const fit = () => { const d = devicePixelRatio || 1; fx.width = innerWidth * d; fx.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
   fit(); addEventListener('resize', fit);
-  const TOK = ['NULL', '0', '1', '{ }', 'JOIN', '✔', 'SELECT', 'dbt', 'ETL', '404→200'], COL = ['#c8ff2e', '#ff4a1c', '#3a46ff', '#ffb8d4', '#14110f'];
+  const TOK = ['NULL', '0', '1', '{ }', 'JOIN', '✔', 'SELECT', 'spark', 'ICEBERG', 'agent()'], COL = ['#c8ff2e', '#ff4a1c', '#3a46ff', '#ffb8d4', '#14110f'];
   function burst(ox, oy) {
     if (reduce) return;
     for (let i = 0; i < 70; i++) {
@@ -192,7 +340,9 @@
     }
     if (parts.length) requestAnimationFrame(step); else running = false;
   }
+  window.burst = burst;
   $('#fire').addEventListener('click', (e) => { const r = e.currentTarget.getBoundingClientRect(); burst(r.left + r.width / 2, r.top); });
+  addEventListener('agent:answer', () => { const r = $('#trace').getBoundingClientRect(); burst(r.left + r.width / 2, r.bottom - 40); });
 
   $('#year').textContent = new Date().getFullYear();
 })();
