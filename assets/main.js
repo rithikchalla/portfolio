@@ -36,7 +36,7 @@
       requestAnimationFrame(loop);
     })();
     document.addEventListener('mouseover', (e) => {
-      const drag = e.target.closest('.onode,.stage3d'), commit = e.target.closest('.commit');
+      const drag = e.target.closest('.onode,.stage3d:not(#skills3d)'), commit = e.target.closest('.commit');
       const hot = e.target.closest('a,button,.row');
       cur.classList.toggle('big', !!(drag || commit));
       cur.firstElementChild.textContent = drag ? 'DRAG' : commit ? (commit.classList.contains('open') ? 'LESS' : 'MORE') : '';
@@ -99,19 +99,25 @@
   });
 
   /* ---------- below the waterline (3D in scenes.js reads window.diveProgress / diveStep) ---------- */
-  const dive = $('#dive'), dk = $('#dive-k'), dt = $('#dive-t'), dp = $('#dive-p'), di = $('#dive-items'), dpanel = $('#dive-panel'), dfill = $('#depth-fill'), dnum = $('#depth-n');
+  const dive = $('#dive'), dk = $('#dive-k'), dt = $('#dive-t'), dp = $('#dive-p'), di = $('#dive-items'), dpanel = $('#dive-panel');
   let dstep = -1;
   function onDive() {
     const r = dive.getBoundingClientRect(), p = clamp(-r.top / (r.height - innerHeight), 0, 1);
     window.diveProgress = p;
-    dfill.style.height = p * 100 + '%'; dnum.parentElement.style.setProperty('--d', p * 100 + '%');
-    dnum.textContent = '−' + Math.round(p * 90) + ' m';
-    dive.classList.toggle('under', p > .12);
     const i = Math.min(S.dive.length - 1, Math.floor(p * S.dive.length * .999));
     if (i === dstep) return; dstep = i; window.diveStep = i;
     const d = S.dive[i];
     dk.textContent = d.kicker; dt.textContent = d.title; dp.textContent = d.text;
     di.innerHTML = d.items.map((m, k) => `<li style="--i:${k}"><b>${esc(m.k)}</b><span>${esc(m.v)}</span></li>`).join('');
+    $('#dive-chips').innerHTML = (d.chips || []).map((c, k) => `<span style="--i:${k}">${esc(c)}</span>`).join('');
+    const big = $('#dive-big'), bb = $('b', big);
+    big.classList.toggle('none', !d.big);
+    if (d.big) {
+      $('span', big).textContent = d.big.label;
+      const t0 = performance.now(), n = d.big.n, fmt = (v) => (d.big.pre || '') + v + (d.big.suf || '');
+      if (reduce) bb.textContent = fmt(n);
+      else (function step(now) { if (dstep !== i) return; const q = Math.min(1, (now - t0) / 900); bb.textContent = fmt(Math.round(n * (1 - Math.pow(1 - q, 3)))); if (q < 1) requestAnimationFrame(step); })(t0);
+    }
     swap(dpanel);
   }
   addEventListener('scroll', onDive, { passive: true }); addEventListener('resize', onDive); onDive();
@@ -285,35 +291,71 @@
   if (S.cert.url) $('#cert-ctas').innerHTML = `<a class="btn lime" href="${esc(S.cert.url)}" target="_blank" rel="noopener">verify credential ↗</a>`;
   onView($('#cert'), () => { if (!reduce) setTimeout(() => { coin.classList.add('flip'); setTimeout(() => coin.classList.remove('flip'), 2200); }, 500); }, .5);
 
-  /* ---------- skills table: sort + filter, "used at" from the résumé ---------- */
-  const RH = 46, rowsEl = $('#rows'), sqlEl = $('#sql'), filtersEl = $('#filters');
-  let cat = 'All', key = 'cat', dir = 1;
-  const rowEls = S.skills.map((s) => {
-    const r = document.createElement('div'); r.className = 'row';
-    r.innerHTML = `<b>${esc(s.name)}</b><span class="cat hide-s">${esc(s.cat)}</span><span class="at">${s.at ? esc(s.at) : '<i>toolkit</i>'}</span>`;
-    rowsEl.appendChild(r); return r;
-  });
-  const val = (s, k) => k === 'at' ? (s.at ? (s.at === 'everywhere' ? 'a' : 'b' + s.at) : 'z') : k === 'cat' ? String(S.categories.indexOf(s.cat)).padStart(2, '0') : s[k];
-  function layout() {
-    const vis = S.skills.map((s, i) => [s, i]).filter(([s]) => cat === 'All' || s.cat === cat)
-      .sort((a, b) => (val(a[0], key).localeCompare(val(b[0], key)) || a[1] - b[1]) * dir);
-    const shown = new Set(vis.map(([, i]) => i));
-    vis.forEach(([, i], k) => { rowEls[i].style.top = k * RH + 'px'; rowEls[i].classList.remove('out'); });
-    S.skills.forEach((_, i) => { if (!shown.has(i)) { rowEls[i].style.top = vis.length * RH + 'px'; rowEls[i].classList.add('out'); } });
-    rowsEl.style.height = vis.length * RH + 'px';
-    const col = { name: 'skill', cat: 'category', at: 'used_at' }[key];
-    sqlEl.innerHTML = `<span class="k">SELECT</span> skill, category, used_at\n<span class="k">FROM</span>   <span class="f">rithik.toolbox</span>` +
-      (cat !== 'All' ? `\n<span class="k">WHERE</span>  category = <span class="v">'${esc(cat)}'</span>` : '') +
-      `\n<span class="k">ORDER BY</span> ${col} <span class="k">${dir < 0 ? 'DESC' : 'ASC'}</span>;  <span style="opacity:.5">-- ${vis.length} rows</span>`;
-    $$('.th button').forEach((b) => { b.lastElementChild.textContent = b.dataset.k === key ? (dir < 0 ? '▼' : '▲') : ''; });
+  /* ---------- skills with receipts (3D constellation lives in scenes.js) ---------- */
+  const CATC = { 'AI & LLM': 'var(--tomato)', 'Data Engineering': 'var(--lime)', 'Cloud & DevOps': '#7fd3ff', 'Languages': 'var(--pink)', 'Analytics & ML': '#c9b8ff' };
+  const rcpt = $('#rcpt'), catsEl = $('#skill-cats');
+  catsEl.innerHTML = S.categories.map((c) => `<div><h5><i style="background:${CATC[c]}"></i>${esc(c)}</h5><div class="chips">${
+    S.skills.map((sk, i) => sk.cat === c ? `<button type="button" data-i="${i}" class="${sk.r.length ? '' : 'tk'}">${esc(sk.name)}</button>` : '').join('')}</div></div>`).join('');
+  const chipEls = $$('button', catsEl);
+  let skRun = 0, skSel = -1, lastPick = -1e9, autoOn = true;
+  async function showSkill(i, user) {
+    if (user) lastPick = performance.now();
+    skSel = i; const sk = S.skills[i], id = ++skRun;
+    chipEls.forEach((b) => b.classList.toggle('on', +b.dataset.i === i));
+    dispatchEvent(new CustomEvent('skill:select', { detail: { i } }));
+    const q = `<span class="k">SELECT</span> org, what, impact <span class="k">FROM</span> rithik.receipts <span class="k">WHERE</span> skill = <span class="v">'${esc(sk.name)}'</span>;`;
+    rcpt.innerHTML = `<div class="q"></div>`;
+    const qEl = $('.q', rcpt), full = q;
+    // type the query (plain text first, then swap in the coloured version)
+    const txt = full.replace(/<[^>]+>/g, '').replace(/&#39;|&apos;/g, "'");
+    if (!reduce) for (let k = 0; k <= txt.length; k += 3) { if (id !== skRun) return; qEl.textContent = txt.slice(0, k); await wait(8); }
+    qEl.innerHTML = full;
+    const used = [...new Set(sk.r.map((r) => r[0]))];
+    rcpt.insertAdjacentHTML('beforeend', `<h4><small>${esc(sk.cat)}</small>${esc(sk.name)}</h4>`);
+    if (!sk.r.length) {
+      rcpt.insertAdjacentHTML('beforeend', `<div class="rc none in"><div class="w">0 rows from my work history. It's in my toolkit, so ask me about it.</div></div>`);
+      return;
+    }
+    for (const [org, what, impact] of sk.r) {
+      if (id !== skRun) return;
+      await wait(220);
+      const o = S.orgs[org];
+      rcpt.insertAdjacentHTML('beforeend', `<div class="rc"><div class="o"><b>${esc(o.name)}</b><span>${esc(o.when)}</span></div><div class="w">${esc(what)}</div><span class="i">⮑ ${esc(impact)}</span></div>`);
+      const el = rcpt.lastElementChild; requestAnimationFrame(() => el.classList.add('in'));
+    }
+    rcpt.insertAdjacentHTML('beforeend', `<div class="sum">-- ${sk.r.length} row${sk.r.length > 1 ? 's' : ''} · used at ${used.map((u) => esc(S.orgs[u].name)).join(', ')}</div>`);
   }
-  S.categories.forEach((c) => {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = c === 'All' ? '*' : c; if (c === cat) b.className = 'on';
-    b.onclick = () => { cat = c; $$('button', filtersEl).forEach((x) => x.classList.toggle('on', x === b)); layout(); };
-    filtersEl.appendChild(b);
-  });
-  $$('.th button').forEach((b) => b.addEventListener('click', () => { if (key === b.dataset.k) dir *= -1; else { key = b.dataset.k; dir = 1; } layout(); }));
-  layout();
+  chipEls.forEach((b) => b.addEventListener('click', () => showSkill(+b.dataset.i, true)));
+  addEventListener('skill:pick', (e) => showSkill(e.detail.i, true));
+  window.skillNames = S.skills.map((x) => x.name);
+  const featured = S.featuredSkills.map((n) => S.skills.findIndex((x) => x.name === n)).filter((i) => i >= 0);
+  let skVisible = false, fi = 0;
+  new IntersectionObserver((es) => es.forEach((e) => { skVisible = e.isIntersecting; if (skVisible && skSel < 0) showSkill(featured[0]); }), { threshold: .3 }).observe($('#skills'));
+  setInterval(() => {
+    if (!skVisible || !autoOn || reduce || performance.now() - lastPick < 15000) return;
+    fi = (fi + 1) % featured.length; showSkill(featured[fi]);
+  }, 5200);
+  $('#sk-auto').addEventListener('click', (e) => { autoOn = !autoOn; e.currentTarget.textContent = autoOn ? '⏸ auto' : '▶ auto'; });
+
+  /* ---------- narrator: one line per section, in my voice ---------- */
+  const narr = $('#narrator'), narrText = $('#narr-text');
+  let narrKey = '', narrRun = 0, narrClosed = false;
+  async function say(key) {
+    if (narrClosed || key === narrKey || !S.narrator[key]) return;
+    narrKey = key; const id = ++narrRun, line = S.narrator[key];
+    narr.classList.add('on'); narrText.textContent = '';
+    if (reduce) { narrText.textContent = line; return; }
+    for (let k = 1; k <= line.length; k++) { if (id !== narrRun) return; narrText.textContent = line.slice(0, k); await wait(16); }
+    // on phones, get out of the way after a few seconds
+    if (matchMedia('(max-width: 900px)').matches) setTimeout(() => { if (id === narrRun) narr.classList.remove('on'); }, 4500);
+  }
+  const secIds = ['hero', 'dive', 'experience', 'agents', 'work', 'ontology', 'cert', 'skills', 'contact'];
+  const narrIO = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) say(e.target.id); }), { rootMargin: '-45% 0px -45% 0px' });
+  secIds.forEach((id) => { const el = document.getElementById(id); if (el) narrIO.observe(el); });
+  setTimeout(() => say('hero'), 2200);
+  $('#narr-x').addEventListener('click', () => { narrClosed = true; narr.classList.add('gone'); });
+  // on phones, the dive has its own panel at the bottom: tuck the narrator away there
+  addEventListener('scroll', () => { const r = dive.getBoundingClientRect(); narr.classList.toggle('hide-m', r.top < innerHeight * .5 && r.bottom > innerHeight * .5); }, { passive: true });
 
   /* ---------- contact ---------- */
   $('#open-to').innerHTML = `Interested in <b>${esc(S.openTo)}</b> roles · ${esc(S.location)}`;

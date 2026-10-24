@@ -15,6 +15,7 @@
 </head>
 <body>
 <div class="cursor" id="cursor"><span></span></div>
+<aside class="narrator" id="narrator" aria-live="polite"><b>RC</b><p><span id="narr-text"></span><i class="caret">▌</i></p><button type="button" id="narr-x" aria-label="Hide narrator">×</button></aside>
 <canvas id="fx" aria-hidden="true"></canvas>
 
 <header class="top">
@@ -38,7 +39,7 @@
   </div>
   <div class="hero-r">
     <div class="stage3d" id="hero3d">
-      <div class="shape-tag"><span>shape:</span> <b id="shape-name">WAREHOUSE</b></div>
+      <div class="shape-tag"><span>shape:</span> <b id="shape-name">WAREHOUSE</b><small id="shape-line"></small></div>
       <div class="shape-dots" id="shape-dots"></div>
       <p class="drag-hint">drag to spin · click to reshape</p>
     </div>
@@ -53,27 +54,29 @@
   <div class="dive-sticky">
     <canvas id="ice3d"></canvas>
     <div class="dive-ui">
-      <h2><span>01</span> Below the waterline</h2>
-      <p class="sub">A job title is the tip of the iceberg. Scroll down to see what's underneath.</p>
+      <h2><span>01</span> What's under my title</h2>
+      <p class="sub">My job title is the tip of the iceberg. Scroll and dive with me.</p>
     </div>
-    <div class="depth" aria-hidden="true"><div class="depth-fill" id="depth-fill"></div><b id="depth-n">0 m</b></div>
+    <div class="dive-flash" id="dive-flash"></div>
     <div class="panel dive-panel" id="dive-panel">
-      <div class="dive-head"><em id="dive-k"></em><h3 id="dive-t"></h3><p id="dive-p"></p></div>
+      <div class="dive-top"><div class="dive-head"><em id="dive-k"></em><h3 id="dive-t"></h3><p id="dive-p"></p></div>
+        <div class="dive-big" id="dive-big"><b></b><span></span></div></div>
       <ul class="metrics" id="dive-items"></ul>
+      <div class="dive-chips" id="dive-chips"></div>
     </div>
   </div>
 </section>
 
 <!-- EXPERIENCE -->
 <section id="experience" class="experience">
-  <h2><span>02</span> git log --career</h2>
-  <p class="sub">Every commit is a role, newest first. Click one to expand it.</p>
+  <h2><span>02</span> Where I've shipped it</h2>
+  <p class="sub"><code>git log --career</code>: every commit is a role I've held, newest first. Click one to open it.</p>
   <div class="log" id="log"></div>
 </section>
 
 <!-- AI AGENTS -->
 <section id="agents" class="agents">
-  <h2><span>03</span> How my agents work</h2>
+  <h2><span>03</span> How my agents think</h2>
   <p class="sub">A walkthrough of three kinds of production AI system I've built, illustrated with sample data (the real ones are confidential). Pick one and watch each tool call light up in 3D.</p>
   <div class="tabs" id="tabs" role="tablist"></div>
   <div class="agent-grid">
@@ -87,8 +90,8 @@
 
 <!-- CASE STUDIES -->
 <section id="work" class="work">
-  <h2><span>04</span> Case studies</h2>
-  <p class="sub">Selected systems from my work: the problem, what I built and the result. Code and data are confidential, so these describe the work rather than link to it.</p>
+  <h2><span>04</span> Things I've shipped</h2>
+  <p class="sub">Six systems I built at work: the problem, what I built and the result. The code and data are confidential, so I describe them here instead of linking.</p>
   <div class="grid" id="cases"></div>
   <div class="repos" id="repos"></div>
 </section>
@@ -116,8 +119,8 @@
       </div>
     </div>
     <div>
-      <h2><span>06</span> Certified by Google Cloud</h2>
-      <p class="sub">Google Cloud Certified Professional Data Engineer, January 2025. It's the exam for designing, building, securing and running data systems on GCP end to end, the same stack I migrated 120+ tables onto. Click the badge to flip it.</p>
+      <h2><span>06</span> Google checked my work</h2>
+      <p class="sub">I'm a Google Cloud Certified Professional Data Engineer (January 2025). It's the exam for designing, building, securing and running data systems on GCP end to end, the same stack I migrated 120+ tables onto. Click the badge to flip it.</p>
       <div class="ctas" id="cert-ctas"></div>
     </div>
   </div>
@@ -125,20 +128,17 @@
 
 <!-- SKILLS -->
 <section id="skills" class="skills">
-  <h2><span>07</span> Query my skills</h2>
-  <p class="sub">Every skill links to where I used it. Click a column header to sort, or a filter to change the WHERE clause.</p>
-  <div class="filters" id="filters"></div>
-  <pre class="sql" id="sql"></pre>
-  <div class="table">
-    <div class="th">
-      <button data-k="name" type="button">skill <em></em></button>
-      <button data-k="cat" type="button" class="hide-s">category <em></em></button>
-      <button data-k="at" type="button">used at <em></em></button>
+  <h2><span>07</span> My skills, with receipts</h2>
+  <p class="sub">Every skill is wired to where I used it. Click one, in 3D or in the list, and I'll pull up the receipts.</p>
+  <div class="skill-grid">
+    <div class="stage3d" id="skills3d"><p class="drag-hint">drag to spin · click a skill</p></div>
+    <div class="win term receipts">
+      <div class="win-bar"><i></i><i></i><i></i><span>rithik.receipts</span><button id="sk-auto" class="mini" type="button">⏸ auto</button></div>
+      <div class="rcpt" id="rcpt" aria-live="polite"></div>
     </div>
-    <div class="rows" id="rows"></div>
   </div>
+  <div class="skill-cats" id="skill-cats"></div>
 </section>
-
 
 <!-- CONTACT -->
 <section id="contact" class="contact">

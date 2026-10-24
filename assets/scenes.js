@@ -99,12 +99,13 @@ const clock = new THREE.Clock();
   const group = new THREE.Group(); group.add(pts); scene.add(group); group.rotation.set(.35, -.6, 0);
 
   const nameEl = document.getElementById('shape-name'), dotsEl = document.getElementById('shape-dots');
-  dotsEl.innerHTML = S.shapes.map((s, i) => `<button type="button" aria-label="${s}" title="${s}"></button>`).join('');
+  dotsEl.innerHTML = S.shapes.map((s) => `<button type="button" aria-label="${s.name}" title="${s.name}"></button>`).join('');
+  const lineEl = document.getElementById('shape-line');
   const dots = [...dotsEl.children];
   let shape = 0, lastUser = -1e9;
   function go(i) {
     shape = (i + shapes.length) % shapes.length;
-    nameEl.textContent = S.shapes[shape]; nameEl.style.animation = 'none'; void nameEl.offsetWidth; nameEl.style.animation = '';
+    nameEl.textContent = S.shapes[shape].name; lineEl.textContent = S.shapes[shape].line; nameEl.style.animation = 'none'; void nameEl.offsetWidth; nameEl.style.animation = '';
     dots.forEach((d, k) => d.classList.toggle('on', k === shape));
   }
   go(0);
@@ -129,7 +130,7 @@ const clock = new THREE.Clock();
 })();
 
 /* =====================================================================
-   2) BELOW THE WATERLINE: the job title is the tip; the work is underneath
+   2) WHAT'S UNDER MY TITLE: the title is the tip; my work is underneath
    ===================================================================== */
 (function dive() {
   const canvas = document.getElementById('ice3d'); if (!canvas) return;
@@ -137,16 +138,16 @@ const clock = new THREE.Clock();
   const st = stage({ host, canvas, bg: C.paper, fov: 45 }); if (!st) return;
   const { scene, camera } = st;
   scene.fog = new THREE.Fog(C.paper, 10, 30);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8890c0, 1.6));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(4, 8, 6); scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8890c0, 1.5));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(4, 8, 6); scene.add(sun);
 
-  // water: translucent fill + ink wireframe, both rippling
+  // water
   const wGeo = new THREE.PlaneGeometry(60, 60, 70, 70); wGeo.rotateX(-Math.PI / 2);
   const base = wGeo.attributes.position.array.slice();
   scene.add(new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: C.blue, transparent: true, opacity: .28, side: THREE.DoubleSide, depthWrite: false })));
   scene.add(new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: C.ink, wireframe: true, transparent: true, opacity: .18 })));
 
-  // the iceberg: a jagged lathe, small above water and huge below
+  // the iceberg
   const prof = [[0, 1.6], [.45, 1.25], [.8, .7], [1.05, .1], [1.6, -.6], [2.35, -1.9], [2.6, -3.1], [2.4, -4.4], [1.7, -5.5], [.6, -6.2], [0, -6.3]].map(([r, y]) => new THREE.Vector2(r, y));
   const ig = new THREE.LatheGeometry(prof, 9).toNonIndexed(), p = ig.attributes.position;
   const h3 = (x, y, z) => { const s = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; return s - Math.floor(s); };
@@ -156,69 +157,96 @@ const clock = new THREE.Clock();
     p.setXYZ(i, x * (1 + n / r * .9), y + n * .3, z * (1 + n / r * .9));
   }
   ig.computeVertexNormals();
-  const berg = new THREE.Mesh(ig, new THREE.MeshLambertMaterial({ color: C.ice, flatShading: true, transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide }));
-  edges(berg, C.ink, .5);
+  const bergMat = new THREE.MeshLambertMaterial({ color: C.ice, flatShading: true, transparent: true, opacity: .42, depthWrite: false, side: THREE.DoubleSide });
+  const berg = new THREE.Mesh(ig, bergMat); edges(berg, C.ink, .5);
   const bergG = new THREE.Group(); bergG.add(berg); scene.add(bergG);
 
-  // one tier per layer of the career story; tier 0 is the job title on the tip
+  // one tier of glowing blocks per layer of my story (the finale step has no tier)
+  const layers = S.dive.filter((d) => !d.finale);
   const ys = [2.5, -.8, -2.0, -3.15, -4.25, -5.35];
   const cols = [C.lime, C.lime, C.tomato, C.blue, C.pink, C.paper];
-  const box = (s, color) => { const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), new THREE.MeshLambertMaterial({ color, flatShading: true })); edges(m); return m; };
-  const linkMat = new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: .6 });
-  const tiers = S.dive.map((d, ti) => {
-    const n = Math.max(1, d.items.length), items = [];
-    const rad = n === 1 ? 0 : [0, .75, 1.05, 1.3, 1.25, 1.1][ti] || 1;
+  const linkMat = new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: .55 });
+  const tiers = layers.map((d, ti) => {
+    const n = Math.max(1, d.items.length), items = [], rad = n === 1 ? 0 : [0, .75, 1.05, 1.3, 1.25, 1.1][ti] || 1;
     for (let i = 0; i < n; i++) {
-      const a = i / n * Math.PI * 2 + ti * .9;
-      const m = box(ti === 0 ? .5 : ti === S.dive.length - 1 ? .46 : .36, cols[ti % cols.length]);
+      const a = i / n * Math.PI * 2 + ti * .9, sz = ti === 0 ? .5 : ti === layers.length - 1 ? .46 : .36;
+      const mat = new THREE.MeshLambertMaterial({ color: cols[ti % cols.length], flatShading: true, transparent: true, emissive: cols[ti % cols.length], emissiveIntensity: 0 });
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), mat); edges(m);
       m.position.set(Math.cos(a) * rad, (ys[ti] ?? -5) + (i % 2 ? .12 : -.12) * (n > 1), Math.sin(a) * rad);
       bergG.add(m); items.push(m);
     }
-    return { items, d };
+    // sonar ring that pulses out from the active tier
+    const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({ length: 64 }, (_, k) => new THREE.Vector3(Math.cos(k / 64 * 6.283), 0, Math.sin(k / 64 * 6.283)))),
+      new THREE.LineBasicMaterial({ color: cols[ti % cols.length] === C.paper ? C.lime : cols[ti % cols.length], transparent: true, opacity: 0 }));
+    ring.position.y = ys[ti] ?? -5; bergG.add(ring);
+    return { items, d, ring };
   });
-  // load-bearing lines: every layer rests on the one below it
   for (let ti = 1; ti < tiers.length; ti++) tiers[ti].items.forEach((m, i) => {
     const up = tiers[ti - 1].items[i % tiers[ti - 1].items.length];
     bergG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([up.position, m.position]), linkMat));
   });
+  // labels: job title on the tip, metrics on the active tier, strata names like a cross-section
   const tip = label(st, S.title.toUpperCase() + ' · CVS HEALTH', 'metric'); tip.obj = tiers[0].items[0]; tip.pos.set(0, .55, 0);
   const metricLabels = [];
-  tiers.forEach((t, ti) => t.d.items.forEach((it, i) => {
-    const l = label(st, it.k + ' ' + (it.s || ''), 'metric');
-    l.obj = t.items[i]; l.pos.set(0, .42, 0); l.tier = ti; metricLabels.push(l);
-  }));
+  tiers.forEach((t, ti) => t.d.items.forEach((it, i) => { const l = label(st, it.k + ' ' + (it.s || ''), 'metric'); l.obj = t.items[i]; l.pos.set(0, .42, 0); l.tier = ti; metricLabels.push(l); }));
+  const strata = tiers.map((t, ti) => { const l = label(st, t.d.strata || '', 'strata'); l.pos.set(2.9, ys[ti], 0); return l; });
 
-  // bubbles rising underwater
-  const BN = 260, bp = new Float32Array(BN * 3);
-  for (let i = 0; i < BN; i++) bp.set([(rand() - .5) * 16, -rand() * 9, (rand() - .5) * 10], i * 3);
+  // bubbles + splash rings
+  const BN = 300, bp = new Float32Array(BN * 3), bv = new Float32Array(BN);
+  for (let i = 0; i < BN; i++) { bp.set([(rand() - .5) * 16, -rand() * 9, (rand() - .5) * 10], i * 3); bv[i] = .012 + (i % 5) * .003; }
   const bGeo = new THREE.BufferGeometry(); bGeo.setAttribute('position', new THREE.BufferAttribute(bp, 3));
-  scene.add(new THREE.Points(bGeo, new THREE.PointsMaterial({ color: 0xffffff, size: .07, transparent: true, opacity: .8 })));
+  scene.add(new THREE.Points(bGeo, new THREE.PointsMaterial({ color: 0xffffff, size: .07, transparent: true, opacity: .85 })));
+  const ripples = [0, 1, 2].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(.92, 1, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide })); r.rotation.x = -Math.PI / 2; r.position.y = .02; scene.add(r); return r; });
+  let splashT = -10;
+  const flash = document.getElementById('dive-flash');
+  function splash(t) {
+    splashT = t;
+    if (!reduce) { flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); }
+    // burst of bubbles around the camera
+    for (let i = 0; i < BN; i += 2) { bp[i * 3] = camera.position.x + (rand() - .5) * 6; bp[i * 3 + 1] = -.3 - rand() * 2.5; bp[i * 3 + 2] = (rand() - .5) * 6 + 1; bv[i] = .03 + rand() * .05; }
+  }
 
   const sky = new THREE.Color(C.paper), deep = new THREE.Color(C.deep), tmp = new THREE.Color();
-  let camY = ys[0];
+  const camPos = new THREE.Vector3(1.2, 3.4, 8.8), look = new THREE.Vector3(0, 2.4, 0), wantPos = new THREE.Vector3(), wantLook = new THREE.Vector3();
+  let wasUnder = false;
   st.tick = (t) => {
-    const prog = window.diveProgress || 0, step = window.diveStep || 0, N = tiers.length;
-    // follow the tiers smoothly: continuous index → interpolated depth
-    const f = clamp(prog * N - .5, 0, N - 1), i0 = Math.floor(f), i1 = Math.min(N - 1, i0 + 1);
-    const target = lerp(ys[i0], ys[i1], f - i0);
-    camY += (target - camY) * .12;
-    camera.position.set(Math.sin(t * .15) * .7 + 1.2, camY + .9, 6.4 + (step === 0 ? 2.4 : 0) * (1 - prog * 4)); camera.lookAt(0, camY - .1, 0);
-    const under = clamp((.35 - camY) / 1.2, 0, 1);
-    tmp.copy(sky).lerp(deep, under); scene.background.copy(tmp); scene.fog.color.copy(tmp);
-    scene.fog.near = lerp(12, 4, under); scene.fog.far = lerp(32, 16, under);
+    const prog = window.diveProgress || 0, step = window.diveStep || 0, N = S.dive.length, finale = !!(S.dive[step] && S.dive[step].finale);
+    // follow the layers; on the finale, pull back to show the whole iceberg
+    const f = clamp(prog * N - .5, 0, layers.length - 1), i0 = Math.floor(f), i1 = Math.min(layers.length - 1, i0 + 1);
+    const ty = lerp(ys[i0], ys[i1], f - i0);
+    if (finale) { wantPos.set(7.5, -1.2, 13.5); wantLook.set(0, -2.2, 0); }
+    else { wantPos.set(Math.sin(t * .15) * .7 + 1.2, ty + .9, step === 0 ? 8.8 : 6.4); wantLook.set(0, ty - .1, 0); }
+    camPos.lerp(wantPos, .07); look.lerp(wantLook, .08);
+    camera.position.copy(camPos); camera.lookAt(look);
+    // waterline crossing = splash
+    const under = camPos.y < .05;
+    if (under !== wasUnder) { wasUnder = under; host.parentElement.classList.toggle('under', under); if (under) splash(t); else splashT = t; }
+    const u = clamp((.35 - camPos.y) / 1.2, 0, 1);
+    tmp.copy(sky).lerp(deep, u); scene.background.copy(tmp); scene.fog.color.copy(tmp);
+    scene.fog.near = lerp(12, finale ? 9 : 4, u); scene.fog.far = lerp(32, finale ? 30 : 16, u);
     const a = wGeo.attributes.position.array;
     for (let i = 0; i < a.length; i += 3) a[i + 1] = base[i + 1] + Math.sin(base[i] * .6 + t * 1.4) * .08 + Math.cos(base[i + 2] * .5 + t) * .08;
     wGeo.attributes.position.needsUpdate = true;
+    ripples.forEach((r, k) => { const e = t - splashT - k * .25; const on = e > 0 && e < 2.2; r.visible = on; if (on) { r.scale.setScalar(.5 + e * 3.2); r.material.opacity = (1 - e / 2.2) * .8; } });
     bergG.rotation.y = t * .07; bergG.position.y = Math.sin(t * .8) * .06;
     const b = bGeo.attributes.position.array;
-    for (let i = 0; i < BN; i++) { b[i * 3 + 1] += .012 + (i % 5) * .003; if (b[i * 3 + 1] > -.1) b[i * 3 + 1] = -9; }
+    for (let i = 0; i < BN; i++) { b[i * 3 + 1] += bv[i]; if (b[i * 3 + 1] > -.1) { b[i * 3 + 1] = -9; bv[i] = .012 + (i % 5) * .003; } }
     bGeo.attributes.position.needsUpdate = true;
-    tiers.forEach((tr, i) => tr.items.forEach((m, k) => {
-      const hot = i === step, s = hot ? 1.3 + Math.sin(t * 4 + k) * .08 : 1;
-      m.scale.setScalar(m.scale.x + (s - m.scale.x) * .15); if (hot) m.rotation.y += .02;
-    }));
-    tip.hide = step > 1;
-    metricLabels.forEach((l) => (l.hide = l.tier !== step));
+    tiers.forEach((tr, i) => {
+      const hot = finale || i === step, dim = !finale && step > 0 && !hot;
+      tr.items.forEach((m, k) => {
+        const s = hot ? (finale ? 1.15 : 1.35 + Math.sin(t * 4 + k) * .08) : 1;
+        m.scale.setScalar(m.scale.x + (s - m.scale.x) * .15); if (hot) m.rotation.y += .02;
+        m.material.emissiveIntensity += ((hot ? .55 + Math.sin(t * 5 + k) * .15 : 0) - m.material.emissiveIntensity) * .1;
+        m.material.opacity += ((dim ? .35 : 1) - m.material.opacity) * .1;
+      });
+      const e = ((t * .7) % 1); tr.ring.visible = hot && !reduce;
+      tr.ring.scale.setScalar(.4 + e * 3.2); tr.ring.material.opacity = (1 - e) * .9;
+      strata[i].el.classList.toggle('hot', hot && !finale || (finale && false));
+      strata[i].hide = camPos.y > .4 && !finale;
+    });
+    tip.hide = step > 1 && !finale;
+    metricLabels.forEach((l) => (l.hide = finale || l.tier !== step));
   };
 })();
 
@@ -292,5 +320,78 @@ const clock = new THREE.Clock();
       pulse.position.copy(active.m.position).multiplyScalar(k);
       if (pt >= 1) { pulse.visible = false; if (dir < 0) active = null; }
     }
+  };
+})();
+
+
+/* =====================================================================
+   4) SKILLS: a constellation of skills wired to where I used them
+   ===================================================================== */
+(function skills() {
+  const host = document.getElementById('skills3d'); if (!host) return;
+  const st = stage({ host, bg: C.paper2, fov: 40 }); if (!st) return;
+  const { scene, camera } = st;
+  camera.position.set(0, 1.6, 12.6); camera.lookAt(0, 0, 0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x999999, 1.8));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.2); dl.position.set(3, 5, 6); scene.add(dl);
+  const CAT = { 'AI & LLM': C.tomato, 'Data Engineering': C.lime, 'Cloud & DevOps': 0x7fd3ff, 'Languages': C.pink, 'Analytics & ML': 0xc9b8ff };
+  const g = new THREE.Group(); scene.add(g);
+
+  // companies: a ring of boxes in the middle
+  const orgKeys = Object.keys(S.orgs), orgs = {};
+  orgKeys.forEach((k, i) => {
+    const a = i / orgKeys.length * Math.PI * 2;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(.42, .42, .42), new THREE.MeshLambertMaterial({ color: C.ink, flatShading: true, emissive: C.lime, emissiveIntensity: 0 }));
+    m.position.set(Math.cos(a) * 2.0, (i % 2 ? .35 : -.35), Math.sin(a) * 2.0); edges(m, C.lime, .8); g.add(m);
+    const l = label(st, S.orgs[k].name, 'org'); l.obj = m; l.pos.set(0, .46, 0);
+    orgs[k] = { m, l };
+  });
+  // skills on a sphere, grouped into latitude bands by category so clusters read
+  const sk = S.skills, n = sk.length, order = sk.map((x, i) => i).sort((a, b) => S.categories.indexOf(sk[a].cat) - S.categories.indexOf(sk[b].cat) || a - b);
+  const nodes = [], lines = [];
+  order.forEach((i, k) => {
+    const y = 1 - 2 * (k + .5) / n, r = Math.sqrt(1 - y * y), th = k * 2.39996, R = 4.5;
+    const pos = new THREE.Vector3(Math.cos(th) * r * R, y * R * .82, Math.sin(th) * r * R);
+    const m = new THREE.Mesh(new THREE.OctahedronGeometry(.14), new THREE.MeshLambertMaterial({ color: CAT[sk[i].cat] || C.lime, flatShading: true }));
+    m.position.copy(pos); edges(m, C.ink); g.add(m);
+    const l = label(st, sk[i].name, 'sk' + (sk[i].r.length ? '' : ' tool')); l.obj = m; l.pos.set(0, .26, 0);
+    l.el.addEventListener('click', () => dispatchEvent(new CustomEvent('skill:pick', { detail: { i } })));
+    const used = [...new Set(sk[i].r.map((x) => x[0]))];
+    const ls = used.map((o) => { const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints([pos, orgs[o].m.position]), new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: .12 })); g.add(ln); return { ln, o }; });
+    nodes[i] = { m, l, pos, used, ls };
+  });
+
+  let sel = -1, ry = 0, rx = .12, targetRy = null, down = null, last = 0;
+  addEventListener('skill:select', (e) => {
+    sel = e.detail.i; const p = nodes[sel].pos;
+    let want = Math.atan2(-p.x, p.z);              // rotate so the skill faces the camera
+    while (want - ry > Math.PI) want -= Math.PI * 2; while (want - ry < -Math.PI) want += Math.PI * 2;
+    targetRy = want;
+  });
+  host.addEventListener('pointerdown', (e) => { if (e.target.closest('.label3d')) return; down = { x: e.clientX, y: e.clientY, ry, rx }; targetRy = null; host.setPointerCapture(e.pointerId); });
+  host.addEventListener('pointermove', (e) => { if (!down) return; ry = down.ry + (e.clientX - down.x) * .008; rx = clamp(down.rx + (e.clientY - down.y) * .006, -.6, .6); });
+  host.addEventListener('pointerup', () => { down = null; last = performance.now(); });
+  const v3 = new THREE.Vector3();
+  st.tick = (t) => {
+    if (targetRy != null) { ry += (targetRy - ry) * .06; if (Math.abs(targetRy - ry) < .002) targetRy = null; }
+    else if (!down && !reduce && performance.now() - last > 2500) ry += .0025;
+    g.rotation.y = ry; g.rotation.x += (rx - g.rotation.x) * .1;
+    const hotOrgs = sel >= 0 ? new Set(nodes[sel].used) : new Set();
+    nodes.forEach((nd, i) => {
+      const on = i === sel;
+      nd.m.scale.setScalar(nd.m.scale.x + ((on ? 2.2 : 1) - nd.m.scale.x) * .12); nd.m.rotation.y += on ? .05 : .01;
+      nd.ls.forEach(({ ln }) => { ln.material.opacity += ((on ? 1 : sel >= 0 ? .05 : .12) - ln.material.opacity) * .1; ln.material.color.set(on ? C.tomato : C.ink); });
+      nd.l.el.classList.toggle('hot', on);
+      // fade labels on the far side of the sphere
+      nd.m.getWorldPosition(v3); const depth = clamp((v3.z + 4.5) / 9, 0, 1);
+      nd.l.el.style.opacity = on ? 1 : (.25 + depth * .75).toFixed(2);
+      nd.l.el.style.zIndex = on ? 6 : Math.round(depth * 4);
+    });
+    Object.entries(orgs).forEach(([k, o]) => {
+      const on = hotOrgs.has(k);
+      o.m.material.emissiveIntensity += ((on ? .9 : 0) - o.m.material.emissiveIntensity) * .1;
+      o.m.scale.setScalar(o.m.scale.x + ((on ? 1.35 : 1) - o.m.scale.x) * .1); o.m.rotation.y += .01;
+      o.l.el.classList.toggle('hot', on); o.l.hide = sel >= 0 && !on;
+    });
   };
 })();
