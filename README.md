@@ -2,14 +2,13 @@
 
 Interactive portfolio for a data engineer working on Spark, Apache Iceberg lakehouses, Palantir Foundry ontologies and AI agents.
 
-What's on the page:
-- **Hero:** 2,744 three.js points that morph between a warehouse, a data lake, an Iceberg table, a neural net and an AI agent. Drag to spin, click to reshape.
-- **Dive into the lakehouse:** a scroll-driven 3D descent below the waterline of an Apache Iceberg table: catalog → metadata.json → manifest lists → manifests → Parquet data files.
-- **Follow the data:** a conveyor from ingest → Spark → Iceberg → ontology → agent.
-- **Agents:** an illustrative agent trace whose tool calls light up a 3D tool orbit.
-- **Ontology explorer:** draggable Foundry-style object types with properties, links and actions.
-- **Certification:** a flip-able Google Cloud Professional Data Engineer badge.
-- **Skills:** a sortable, filterable "SQL" table, a live dbt clean-up demo and the projects.
+What's on the page (content comes from my résumé):
+- **Hero:** title, headline impact numbers and three.js points that morph between a warehouse, a lake, an iceberg, a neural net and an agent.
+- **Below the waterline:** a scroll-driven 3D dive. The job title is the tip; each layer underneath is real impact (AI systems, agents, platforms, cost savings, foundation).
+- **git log --career:** experience as an expandable commit history.
+- **How my agents work:** three illustrated walkthroughs (text-to-SQL, self-healing pipelines, grounded RAG) synced to a 3D tool orbit. Sample data only.
+- **Case studies:** problem → built → result for six systems. Confidential work, so no code or links.
+- **Foundry ontology explorer**, a flip-able **GCP Professional Data Engineer** badge and a sortable **skills** table showing where each skill was used.
 
 Edit content in `assets/data.js`. three.js r160 is vendored in `assets/vendor/` (MIT), so there's no build step and no CDN.
 

@@ -129,7 +129,7 @@ const clock = new THREE.Clock();
 })();
 
 /* =====================================================================
-   2) DIVE: sink below the waterline of an Apache Iceberg table
+   2) BELOW THE WATERLINE: the job title is the tip; the work is underneath
    ===================================================================== */
 (function dive() {
   const canvas = document.getElementById('ice3d'); if (!canvas) return;
@@ -140,17 +140,15 @@ const clock = new THREE.Clock();
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8890c0, 1.6));
   const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(4, 8, 6); scene.add(sun);
 
-  // water surface: translucent fill + ink wireframe, both rippling
+  // water: translucent fill + ink wireframe, both rippling
   const wGeo = new THREE.PlaneGeometry(60, 60, 70, 70); wGeo.rotateX(-Math.PI / 2);
   const base = wGeo.attributes.position.array.slice();
-  const water = new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: C.blue, transparent: true, opacity: .28, side: THREE.DoubleSide, depthWrite: false }));
-  const wire = new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: C.ink, wireframe: true, transparent: true, opacity: .18 }));
-  scene.add(water, wire);
+  scene.add(new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: C.blue, transparent: true, opacity: .28, side: THREE.DoubleSide, depthWrite: false })));
+  scene.add(new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: C.ink, wireframe: true, transparent: true, opacity: .18 })));
 
   // the iceberg: a jagged lathe, small above water and huge below
-  const prof = [[0, 1.6], [.45, 1.25], [.8, .7], [1.05, .1], [1.6, -.6], [2.35, -1.9], [2.6, -3.1], [2.25, -4.4], [1.4, -5.5], [.5, -6], [0, -6.1]].map(([r, y]) => new THREE.Vector2(r, y));
-  let ig = new THREE.LatheGeometry(prof, 9).toNonIndexed();
-  const p = ig.attributes.position;
+  const prof = [[0, 1.6], [.45, 1.25], [.8, .7], [1.05, .1], [1.6, -.6], [2.35, -1.9], [2.6, -3.1], [2.4, -4.4], [1.7, -5.5], [.6, -6.2], [0, -6.3]].map(([r, y]) => new THREE.Vector2(r, y));
+  const ig = new THREE.LatheGeometry(prof, 9).toNonIndexed(), p = ig.attributes.position;
   const h3 = (x, y, z) => { const s = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; return s - Math.floor(s); };
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), y = p.getY(i), z = p.getZ(i), r = Math.hypot(x, z); if (r < .01) continue;
@@ -158,33 +156,37 @@ const clock = new THREE.Clock();
     p.setXYZ(i, x * (1 + n / r * .9), y + n * .3, z * (1 + n / r * .9));
   }
   ig.computeVertexNormals();
-  const berg = new THREE.Mesh(ig, new THREE.MeshLambertMaterial({ color: C.ice, flatShading: true, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide }));
-  edges(berg, C.ink, .55);
+  const berg = new THREE.Mesh(ig, new THREE.MeshLambertMaterial({ color: C.ice, flatShading: true, transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide }));
+  edges(berg, C.ink, .5);
   const bergG = new THREE.Group(); bergG.add(berg); scene.add(bergG);
 
-  // the metadata tree inside: catalog → metadata.json → manifest lists → manifests → data files
-  const tiers = [];
-  const box = (s, color, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), new THREE.MeshLambertMaterial({ color, flatShading: true })); m.position.set(x, y, z); edges(m); return m; };
-  const linkMat = new THREE.LineBasicMaterial({ color: C.ink });
-  const link = (a, b) => { const g = new THREE.BufferGeometry().setFromPoints([a.position, b.position]); const l = new THREE.Line(g, linkMat); bergG.add(l); };
-  const tierDefs = [
-    { y: 2.6, n: 1, s: .42, color: C.lime, r: 0, name: 'catalog → lake.sales.orders' },
-    { y: .45, n: 1, s: .36, color: C.lime, r: 0, name: 'v3.metadata.json' },
-    { y: -1.2, n: 2, s: .3, color: C.pink, r: .7, name: 'snap-*.avro · manifest lists' },
-    { y: -2.9, n: 6, s: .24, color: C.blue, r: 1.35, name: 'manifest-*.avro' },
-    { y: -4.6, n: 18, s: .17, color: C.tomato, r: 1.45, name: '*.parquet data files' }
-  ];
-  tierDefs.forEach((d, ti) => {
-    const g = new THREE.Group(), items = [];
-    for (let i = 0; i < d.n; i++) {
-      const a = i / d.n * Math.PI * 2 + ti, rr = d.n > 8 ? d.r * (i % 2 ? .55 : 1) : d.r;
-      const m = box(d.s, d.color, Math.cos(a) * rr, d.y + (d.n > 8 ? (i % 3 - 1) * .2 : 0), Math.sin(a) * rr);
-      g.add(m); items.push(m);
+  // one tier per layer of the career story; tier 0 is the job title on the tip
+  const ys = [2.5, -.8, -2.0, -3.15, -4.25, -5.35];
+  const cols = [C.lime, C.lime, C.tomato, C.blue, C.pink, C.paper];
+  const box = (s, color) => { const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), new THREE.MeshLambertMaterial({ color, flatShading: true })); edges(m); return m; };
+  const linkMat = new THREE.LineBasicMaterial({ color: C.ink, transparent: true, opacity: .6 });
+  const tiers = S.dive.map((d, ti) => {
+    const n = Math.max(1, d.items.length), items = [];
+    const rad = n === 1 ? 0 : [0, .75, 1.05, 1.3, 1.25, 1.1][ti] || 1;
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2 + ti * .9;
+      const m = box(ti === 0 ? .5 : ti === S.dive.length - 1 ? .46 : .36, cols[ti % cols.length]);
+      m.position.set(Math.cos(a) * rad, (ys[ti] ?? -5) + (i % 2 ? .12 : -.12) * (n > 1), Math.sin(a) * rad);
+      bergG.add(m); items.push(m);
     }
-    bergG.add(g); tiers.push({ g, items, d });
+    return { items, d };
   });
-  for (let ti = 1; ti < tiers.length; ti++) tiers[ti].items.forEach((m, i) => link(tiers[ti - 1].items[i % tiers[ti - 1].items.length], m));
-  const labels = tiers.map((t) => { const l = label(st, t.d.name); l.obj = t.items[0]; l.pos.set(.5, .35, 0); return l; });
+  // load-bearing lines: every layer rests on the one below it
+  for (let ti = 1; ti < tiers.length; ti++) tiers[ti].items.forEach((m, i) => {
+    const up = tiers[ti - 1].items[i % tiers[ti - 1].items.length];
+    bergG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([up.position, m.position]), linkMat));
+  });
+  const tip = label(st, S.title.toUpperCase() + ' · CVS HEALTH', 'metric'); tip.obj = tiers[0].items[0]; tip.pos.set(0, .55, 0);
+  const metricLabels = [];
+  tiers.forEach((t, ti) => t.d.items.forEach((it, i) => {
+    const l = label(st, it.k + ' ' + (it.s || ''), 'metric');
+    l.obj = t.items[i]; l.pos.set(0, .42, 0); l.tier = ti; metricLabels.push(l);
+  }));
 
   // bubbles rising underwater
   const BN = 260, bp = new Float32Array(BN * 3);
@@ -193,25 +195,30 @@ const clock = new THREE.Clock();
   scene.add(new THREE.Points(bGeo, new THREE.PointsMaterial({ color: 0xffffff, size: .07, transparent: true, opacity: .8 })));
 
   const sky = new THREE.Color(C.paper), deep = new THREE.Color(C.deep), tmp = new THREE.Color();
+  let camY = ys[0];
   st.tick = (t) => {
-    const prog = window.diveProgress || 0, step = window.diveStep || 0, e = prog * prog * (3 - 2 * prog);
-    const cy = lerp(2.6, -4.6, e);
-    camera.position.set(Math.sin(t * .15) * .6, cy + .4, lerp(9.5, 7.2, e)); camera.lookAt(0, cy - .2, 0);
-    const under = clamp((.35 - cy) / 1.2, 0, 1);
+    const prog = window.diveProgress || 0, step = window.diveStep || 0, N = tiers.length;
+    // follow the tiers smoothly: continuous index → interpolated depth
+    const f = clamp(prog * N - .5, 0, N - 1), i0 = Math.floor(f), i1 = Math.min(N - 1, i0 + 1);
+    const target = lerp(ys[i0], ys[i1], f - i0);
+    camY += (target - camY) * .12;
+    camera.position.set(Math.sin(t * .15) * .7 + 1.2, camY + .9, 6.4 + (step === 0 ? 2.4 : 0) * (1 - prog * 4)); camera.lookAt(0, camY - .1, 0);
+    const under = clamp((.35 - camY) / 1.2, 0, 1);
     tmp.copy(sky).lerp(deep, under); scene.background.copy(tmp); scene.fog.color.copy(tmp);
     scene.fog.near = lerp(12, 4, under); scene.fog.far = lerp(32, 16, under);
     const a = wGeo.attributes.position.array;
     for (let i = 0; i < a.length; i += 3) a[i + 1] = base[i + 1] + Math.sin(base[i] * .6 + t * 1.4) * .08 + Math.cos(base[i + 2] * .5 + t) * .08;
     wGeo.attributes.position.needsUpdate = true;
-    bergG.rotation.y = t * .08; bergG.position.y = Math.sin(t * .8) * .06;
+    bergG.rotation.y = t * .07; bergG.position.y = Math.sin(t * .8) * .06;
     const b = bGeo.attributes.position.array;
     for (let i = 0; i < BN; i++) { b[i * 3 + 1] += .012 + (i % 5) * .003; if (b[i * 3 + 1] > -.1) b[i * 3 + 1] = -9; }
     bGeo.attributes.position.needsUpdate = true;
-    tiers.forEach((tr, i) => {
-      const hot = i === step || (step === 1 && i === 0);
-      tr.items.forEach((m, k) => { const s = hot ? 1.35 + Math.sin(t * 5 + k) * .1 : 1; m.scale.setScalar(m.scale.x + (s - m.scale.x) * .15); if (hot) m.rotation.y += .03; });
-      labels[i].el.classList.toggle('hot', hot); labels[i].hide = Math.abs(i - step) > 1;
-    });
+    tiers.forEach((tr, i) => tr.items.forEach((m, k) => {
+      const hot = i === step, s = hot ? 1.3 + Math.sin(t * 4 + k) * .08 : 1;
+      m.scale.setScalar(m.scale.x + (s - m.scale.x) * .15); if (hot) m.rotation.y += .02;
+    }));
+    tip.hide = step > 1;
+    metricLabels.forEach((l) => (l.hide = l.tier !== step));
   };
 })();
 
@@ -255,6 +262,7 @@ const clock = new THREE.Clock();
     pulse.material.color.set(dir > 0 ? C.lime : C.tomato);
   });
   addEventListener('agent:think', () => (think = 1));
+  addEventListener('agent:reset', () => { active = null; pulse.visible = false; });
   addEventListener('agent:answer', () => (celebrate = 1));
 
   // a field of dim "data" specks

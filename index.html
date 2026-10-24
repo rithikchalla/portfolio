@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rithik Challa · Data Engineer & AI Agents</title>
-<meta name="description" content="Rithik Reddy Challa: Google Cloud Certified Professional Data Engineer. Spark, Apache Iceberg lakehouses, Palantir Foundry Ontology and AI agents.">
-<meta property="og:title" content="Rithik Challa · Data Engineer & AI Agents">
-<meta property="og:description" content="Lakehouses, Spark, Foundry ontologies and AI agents that act on them.">
+<title>Rithik Reddy Challa · Data & AI Engineer</title>
+<meta name="description" content="Rithik Reddy Challa: Data & AI Engineer at CVS Health. 5+ years building TB-scale data platforms and production AI agents. Palantir Foundry & AIP, GCP, Spark, Iceberg. Google Cloud Certified Professional Data Engineer.">
+<meta property="og:title" content="Rithik Reddy Challa · Data & AI Engineer">
+<meta property="og:description" content="TB-scale data platforms and the production AI agents that run on them. Google Cloud Certified Professional Data Engineer.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,23 +20,21 @@
 <header class="top">
   <a href="#hero" class="mark">RC<i>_</i></a>
   <nav>
-    <a href="#dive">lakehouse</a><a href="#agents">agents</a><a href="#ontology">ontology</a><a href="#skills">skills</a><a href="#projects">projects</a>
+    <a href="#dive">impact</a><a href="#experience">experience</a><a href="#agents">ai agents</a><a href="#work">case studies</a><a href="#skills">skills</a>
     <a href="#contact" class="pill">contact</a>
   </nav>
 </header>
 
 <main>
-<!-- HERO: 3D points that morph between data shapes -->
+<!-- HERO -->
 <section id="hero" class="hero">
   <div class="hero-l">
     <a class="kicker cert-chip" href="#cert"><span class="seal">✓</span> Google Cloud Certified · Professional Data Engineer</a>
-    <h1 id="name" aria-label="Rithik Challa"><span class="nm" data-t="RITHIK"></span><span class="nm outline" data-t="CHALLA"></span></h1>
-    <p class="typed-line">I build <span id="typed"></span><span class="caret">▌</span></p>
-    <p class="tag">Data engineer working across <mark>Spark</mark>, <mark>Apache Iceberg</mark> lakehouses, <mark>Palantir Foundry</mark> ontologies and the <mark>AI agents</mark> that run on top of them.</p>
-    <div class="ctas">
-      <a class="btn lime" href="#agents">watch an agent work</a>
-      <a class="btn" href="mailto:19rithik@gmail.com">19rithik@gmail.com</a>
-    </div>
+    <h1 id="name" aria-label="Rithik Reddy Challa"><span class="nm" data-t="RITHIK"></span><span class="nm outline" data-t="CHALLA"></span></h1>
+    <p class="role-line"><b>Data &amp; AI Engineer</b> <span>@ CVS Health</span> <span>· 5+ yrs</span> <span>· Boston, MA</span></p>
+    <p class="typed-line">I ship <span id="typed"></span><span class="caret">▌</span></p>
+    <p class="tag">I build <mark>TB-scale data platforms</mark> and the <mark>production AI agents</mark> that run on them, across healthcare and e-commerce, working directly with the business from problem to deployment.</p>
+    <div class="ctas" id="hero-ctas"></div>
   </div>
   <div class="hero-r">
     <div class="stage3d" id="hero3d">
@@ -45,54 +43,60 @@
       <p class="drag-hint">drag to spin · click to reshape</p>
     </div>
   </div>
+  <div class="stats" id="stats"></div>
 </section>
 
 <div class="band tomato" aria-hidden="true"><div class="mq" data-mq></div></div>
 
-<!-- ICEBERG DIVE (sticky, scroll-driven 3D) -->
+<!-- BELOW THE WATERLINE -->
 <section id="dive" class="dive">
   <div class="dive-sticky">
     <canvas id="ice3d"></canvas>
     <div class="dive-ui">
-      <h2><span>01</span> Dive into the lakehouse</h2>
-      <p class="sub">Scroll to sink below the waterline of an Apache Iceberg table.</p>
+      <h2><span>01</span> Below the waterline</h2>
+      <p class="sub">A job title is the tip of the iceberg. Scroll down to see what's underneath.</p>
     </div>
     <div class="depth" aria-hidden="true"><div class="depth-fill" id="depth-fill"></div><b id="depth-n">0 m</b></div>
-    <div class="panel dive-panel" id="dive-panel"><div class="panel-n" id="dive-n">0</div><div><h3 id="dive-t"></h3><p id="dive-p"></p></div></div>
+    <div class="panel dive-panel" id="dive-panel">
+      <div class="dive-head"><em id="dive-k"></em><h3 id="dive-t"></h3><p id="dive-p"></p></div>
+      <ul class="metrics" id="dive-items"></ul>
+    </div>
   </div>
 </section>
 
-<!-- PIPELINE -->
-<section id="pipeline" class="pipeline">
-  <div class="sticky">
-    <h2><span>02</span> Follow the data</h2>
-    <p class="sub">Keep scrolling. The box is one record going from raw to an AI agent's answer.</p>
-    <div class="road">
-      <div class="line"><div class="line-fill" id="line-fill"></div></div>
-      <div id="stations"></div>
-      <div class="box" id="box"><div class="eyes"><i></i><i></i></div><div class="mouth"></div><div class="antenna"></div></div>
-    </div>
-    <div class="panel" id="panel"><div class="panel-n" id="panel-n">1</div><div><h3 id="panel-t"></h3><p id="panel-p"></p></div></div>
-  </div>
+<!-- EXPERIENCE -->
+<section id="experience" class="experience">
+  <h2><span>02</span> git log --career</h2>
+  <p class="sub">Every commit is a role, newest first. Click one to expand it.</p>
+  <div class="log" id="log"></div>
 </section>
 
 <!-- AI AGENTS -->
 <section id="agents" class="agents">
-  <h2><span>03</span> Agents that do the work</h2>
-  <p class="sub">An illustrative run of the kind of agent I build: it plans, calls tools against the ontology and the lakehouse, then takes a governed action. Watch the tool light up in 3D.</p>
+  <h2><span>03</span> How my agents work</h2>
+  <p class="sub">A walkthrough of three kinds of production AI system I've built, illustrated with sample data (the real ones are confidential). Pick one and watch each tool call light up in 3D.</p>
+  <div class="tabs" id="tabs" role="tablist"></div>
   <div class="agent-grid">
-    <div class="stage3d dark" id="agent3d"></div>
+    <div class="stage3d dark" id="agent3d"><div class="stack-tag" id="stack-tag"></div></div>
     <div class="win term">
-      <div class="win-bar"><i></i><i></i><i></i><span>agent.run()</span><button id="replay" class="mini" type="button">↺ replay</button></div>
+      <div class="win-bar"><i></i><i></i><i></i><span id="term-title">agent.run()</span><button id="replay" class="mini" type="button">↺ replay</button></div>
       <div class="trace" id="trace" aria-live="polite"></div>
     </div>
   </div>
 </section>
 
+<!-- CASE STUDIES -->
+<section id="work" class="work">
+  <h2><span>04</span> Case studies</h2>
+  <p class="sub">Selected systems from my work: the problem, what I built and the result. Code and data are confidential, so these describe the work rather than link to it.</p>
+  <div class="grid" id="cases"></div>
+  <div class="repos" id="repos"></div>
+</section>
+
 <!-- ONTOLOGY -->
 <section id="ontology" class="ontology">
-  <h2><span>04</span> Foundry Ontology, explained by clicking</h2>
-  <p class="sub">In Palantir Foundry, the ontology turns tables into real-world objects, links and actions. This is a sample supply-chain model. Drag the objects around and click one to inspect it.</p>
+  <h2><span>05</span> I model the business, not just tables</h2>
+  <p class="sub">On Palantir Foundry I turn datasets into an ontology of objects, links and actions that people and AI agents can work with. Here's a sample supply-chain model: drag the objects around and click one to inspect it.</p>
   <div class="onto-grid">
     <div class="onto-board" id="onto-board"><svg id="onto-svg"></svg></div>
     <div class="win onto-card" id="onto-card"></div>
@@ -105,15 +109,15 @@
     <div class="coin-wrap" id="coin-wrap">
       <div class="coin" id="coin" tabindex="0" role="button" aria-label="Flip certification badge">
         <div class="face front">
-          <div class="ring"><span>GOOGLE CLOUD CERTIFIED · GOOGLE CLOUD CERTIFIED · </span></div>
-          <div class="core"><small>Professional</small><b>DATA<br>ENGINEER</b><em>✓ certified</em></div>
+          <div class="ring"></div>
+          <div class="core"><small>Professional</small><b>DATA<br>ENGINEER</b><em id="cert-date">✓ certified</em></div>
         </div>
         <div class="face back"><h4>What it covers</h4><ol id="cert-domains"></ol></div>
       </div>
     </div>
     <div>
-      <h2><span>05</span> Certified, not just curious</h2>
-      <p class="sub">I passed the Google Cloud Professional Data Engineer exam, which tests designing, building, securing and running data systems on GCP end to end. Click the badge to flip it.</p>
+      <h2><span>06</span> Certified by Google Cloud</h2>
+      <p class="sub">Google Cloud Certified Professional Data Engineer, January 2025. It's the exam for designing, building, securing and running data systems on GCP end to end, the same stack I migrated 120+ tables onto. Click the badge to flip it.</p>
       <div class="ctas" id="cert-ctas"></div>
     </div>
   </div>
@@ -121,58 +125,28 @@
 
 <!-- SKILLS -->
 <section id="skills" class="skills">
-  <h2><span>06</span> Query my skills</h2>
-  <p class="sub">It's a real table. Click a column header to sort, or click a filter to change the WHERE clause.</p>
+  <h2><span>07</span> Query my skills</h2>
+  <p class="sub">Every skill links to where I used it. Click a column header to sort, or a filter to change the WHERE clause.</p>
   <div class="filters" id="filters"></div>
   <pre class="sql" id="sql"></pre>
   <div class="table">
     <div class="th">
-      <button data-k="name">skill <em></em></button>
-      <button data-k="cat" class="hide-s">category <em></em></button>
-      <button data-k="level">confidence <em></em></button>
+      <button data-k="name" type="button">skill <em></em></button>
+      <button data-k="cat" type="button" class="hide-s">category <em></em></button>
+      <button data-k="at" type="button">used at <em></em></button>
     </div>
     <div class="rows" id="rows"></div>
   </div>
 </section>
 
-<!-- DBT DEMO -->
-<section id="clean" class="clean">
-  <div class="clean-grid">
-    <div>
-      <h2><span>07</span> Messy in, boring out</h2>
-      <p class="sub">These are real problems from my dbt project: five spellings of two companies, four date formats and ranges stuffed into one column. Hit run.</p>
-    </div>
-    <div class="win" id="dirty">
-      <div class="win-bar"><i></i><i></i><i></i><span>raw.developers  →  stg_developers</span></div>
-      <div class="tbl-wrap"><table>
-        <thead><tr><th>developer</th><th>released</th><th>owners_low</th><th>owners_high</th></tr></thead>
-        <tbody id="dirty-body"></tbody>
-      </table></div>
-      <div class="win-foot">
-        <button class="btn tomato" id="run" type="button">▶ dbt run</button>
-        <span id="status" aria-live="polite">5 rows · 3 duplicates · 4 formats</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PROJECTS -->
-<section id="projects" class="projects">
-  <h2><span>08</span> SELECT * FROM projects</h2>
-  <p class="sub">Each repo is a table. Rows are what it does.</p>
-  <div class="grid" id="grid"></div>
-</section>
 
 <!-- CONTACT -->
 <section id="contact" class="contact">
   <p class="kicker big">// last row</p>
-  <h2 class="giant">LET'S MOVE<br>SOME <span class="outline">DATA</span></h2>
-  <div class="ctas c">
-    <a class="btn lime" href="mailto:19rithik@gmail.com">19rithik@gmail.com</a>
-    <a class="btn" href="https://github.com/rithikchalla" target="_blank" rel="noopener">github.com/rithikchalla</a>
-    <button class="btn" id="fire" type="button">✱ confetti</button>
-  </div>
-  <p class="foot">© <span id="year"></span> Rithik Reddy Challa · built with HTML, CSS, canvas and three.js</p>
+  <h2 class="giant">LET'S BUILD<br>SOMETHING <span class="outline">REAL</span></h2>
+  <p class="open-to" id="open-to"></p>
+  <div class="ctas c" id="contact-ctas"></div>
+  <p class="foot">© <span id="year"></span> Rithik Reddy Challa · built with HTML, CSS, canvas and three.js · <button id="fire" type="button" class="linkish">✱ confetti</button></p>
 </section>
 </main>
 <script src="assets/data.js"></script>
