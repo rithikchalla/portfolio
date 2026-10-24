@@ -14,4 +14,4 @@ What's on the page:
 Edit content in `assets/data.js`. three.js r160 is vendored in `assets/vendor/` (MIT), so there's no build step and no CDN.
 
 Run locally: `python3 -m http.server`, then open http://localhost:8000. ES modules don't load from `file://`.
-Deploy: Settings → Pages → Source: **GitHub Actions** (`.github/workflows/pages.yml` publishes `main`).
+Deploy: GitHub Pages serves `main` directly (Settings → Pages → Deploy from a branch → main / root). `.nojekyll` skips Jekyll processing.
